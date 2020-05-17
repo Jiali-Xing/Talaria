@@ -2,8 +2,8 @@ import time
 # from json import dumps as dump_json
 import json
 from world import SimulationWorld
-from node_factory import NodeFactory
-from transaction_factory import TransactionFactory
+from dlasc_node_factory import NodeFactory
+from dlasc_transaction_factory import TransactionFactory
 from blocksim.models.network import Network
 
 
@@ -33,41 +33,43 @@ def report_node_chain(world, nodes_list):
 
 def run_model():
     now = int(time.time())  # Current time
-    duration = 3600 * 24  # seconds
+    duration = 3600  # seconds
 
     world = SimulationWorld(
         duration,
         now,
-        'input-parameters/config.json',
-        'input-parameters/latency.json',
-        'input-parameters/throughput-received.json',
-        'input-parameters/throughput-sent.json',
-        'input-parameters/delays.json')
+        'dlasc-input-parameters/config.json',
+        'dlasc-input-parameters/latency.json',
+        'dlasc-input-parameters/throughput-received.json',
+        'dlasc-input-parameters/throughput-sent.json',
+        'dlasc-input-parameters/delays.json')
 
     # Create the network
     network = Network(world.env, 'NetworkXPTO')
 
     miners = {
-        'Ohio': {
+        '5': {
             'how_many': 1,
             'mega_hashrate_range': "(20, 40)"
         },
-        'Tokyo': {
+        '1': {
             'how_many': 1,
             'mega_hashrate_range': "(20, 40)"
         }
     }
     non_miners = {
-        'Tokyo': {
+        '1': {
             'how_many': 1
         },
-        'Ireland': {
+        '4': {
             'how_many': 1
         }
     }
 
     node_factory = NodeFactory(world, network)
     # Create all nodes
+    # Notice that the miner/non_miners this useless here, they're specified in
+    # dlasc_node_factory
     nodes_list = node_factory.create_nodes(miners, non_miners)
     # Start the network heartbeat
     world.env.process(network.start_heartbeat())
@@ -76,10 +78,9 @@ def run_model():
         node.connect(nodes_list)
 
     transaction_factory = TransactionFactory(world)
-    transaction_factory.broadcast(100, 400, 15, nodes_list)
+    transaction_factory.broadcast(100, 1, 5, nodes_list)
 
     world.start_simulation()
-
     report_node_chain(world, nodes_list)
     write_report(world)
 
