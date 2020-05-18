@@ -5,14 +5,6 @@ from blocksim.models.ethereum.node import ETHNode
 import csv
 
 
-with open('Test_DLA1_Input.csv', mode='r') as infile:
-    reader = csv.reader(infile)
-    # with open('Test_DLA1_Input.csv', mode='w') as outfile:
-    #     writer = csv.writer(outfile)
-    node_region = {rows[0]: rows[3] for rows in reader}
-    print(node_region)
-
-
 class NodeFactory:
     """ Responsible to create the nodes used during the simulation.
     Depending on the blockchain being simulated, node factory will create nodes according
@@ -73,6 +65,10 @@ class NodeFactory:
         return nodes_list
 
     def create_ethereum_nodes(self, miners, non_miners):
+        with open('Test_DLA1_Input.csv', mode='r') as infile:
+            reader = csv.reader(infile)
+            node_region = {rows[0]: rows[3] for rows in reader}
+            print(node_region)
         # node_id = 0  # Unique ID for each node
         nodes_list = []
         for node_id, region_id in node_region.items():
