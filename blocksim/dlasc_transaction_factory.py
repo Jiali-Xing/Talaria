@@ -3,6 +3,7 @@ from random import randint, choices
 from blocksim.models.transaction import Transaction
 from blocksim.models.ethereum.transaction import Transaction as ETHTransaction
 import json
+import numpy as np
 
 # Read a dictionary for node_tx
 # node_tx = {}
@@ -24,12 +25,21 @@ class TransactionFactory:
 
     def broadcast(self, number_of_batches, transactions_per_batch, interval, nodes_list):
         with open('../DLASC/src/tx_count.json') as f:
-            today = randint(0, 180 - 1)
-            node_tx = json.load(f)[today]
+            # today = randint(0, 180 - 1)
+            today = ' DAY 5 '
+            # only one day's tx is too little...
+            all_days_tx = json.load(f)
+            j = 0
+            # This part sums all tx of 180 days, to make tx larger...
+            for key, value in all_days_tx.items():
+                node_tx = np.empty([len(all_days_tx), len(all_days_tx[today][1:])], dtype=np.int64)
+                node_tx[j] = all_days_tx[key][1:]
+                j += 1
+            sum_tx = np.sum(node_tx, axis=0)
 
-        for i in range(len(node_tx)-1):
+        for i in range(len(sum_tx)):
             transactions = []
-            for _i in range(node_tx[str(i+1)]):
+            for _i in range(sum_tx[i]):
                 # Generate a random string to a transaction be distinct from others
                 rand_sign = ''.join(
                     choices(string.ascii_letters + string.digits, k=20))

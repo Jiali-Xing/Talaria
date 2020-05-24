@@ -1,7 +1,7 @@
 from ast import literal_eval as make_tuple
 from random import randint
 from blocksim.models.bitcoin.node import BTCNode
-from blocksim.models.ethereum.node import ETHNode
+from blocksim.models.ethereum.dlasc_node import ETHNode
 import csv
 
 
@@ -73,7 +73,7 @@ class NodeFactory:
         nodes_list = []
         for node_id, region_id in node_region.items():
             node_address = f'{region_id}-{node_id}'
-            if int(region_id) == 4:
+            if int(region_id) <= 3:
                 # Create the miners nodes if node is in US
                 mega_hashrate_range = make_tuple('(20, 40)')
                 # Choose a random value on MH/s range and convert to H/s
