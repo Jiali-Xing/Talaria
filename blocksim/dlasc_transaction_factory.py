@@ -28,6 +28,7 @@ class TransactionFactory:
             # today = randint(0, 180 - 1)
             today = ' DAY 5 '
             # only one day's tx is too little...
+            # Thus I decide to use all tx from 180 days
             all_days_tx = json.load(f)
             j = 0
             # This part sums all tx of 180 days, to make tx larger...
