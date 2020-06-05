@@ -24,11 +24,11 @@ class Network:
 
     def _init_lists(self):
         for add, node in self._nodes.items():
-            if node.is_mining:
+            if node.is_authority:
                 self._list_nodes.append(node)
                 node_prob = node.hashrate / self.total_hashrate
                 self._list_probabilities.append(node_prob)
-            if node.isAuthority: #Put the authority nodes in the authority node list
+            if node.is_authority: #Put the authority nodes in the authority node list
                 self._list_authority_nodes.append(node)
 
     def start_heartbeat(self):

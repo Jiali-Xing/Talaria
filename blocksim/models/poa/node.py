@@ -1,5 +1,5 @@
-from blocksim.models.node import Node
-from blocksim.models.network import Network
+from blocksim.models.permissioned_node import Node
+from blocksim.models.permissioned_network import Network
 from blocksim.models.chain import Chain
 from blocksim.models.consensus import Consensus
 from blocksim.models.db import BaseDB
@@ -17,14 +17,14 @@ class POANode(Node):
                  location: str,
                  address: str,
                  hashrate=0,
-                 is_mining=False):
+                 is_authority=False):
         # Jiali: This function is borrowed from ethereum/node.py, without any change actually.
         # Create the PoA genesis block and init the chain
         genesis = Block(BlockHeader())
         consensus = Consensus(env)
         chain = Chain(env, self, consensus, genesis, BaseDB())
         self.hashrate = hashrate
-        self.is_mining = is_mining
+        self.is_authority = is_authority
         super().__init__(env,
                          network,
                          location,
@@ -33,7 +33,7 @@ class POANode(Node):
                          consensus)
         self.temp_headers = {}
         self.network_message = Message(self)
-        if is_mining:
+        if is_authority:
             # Transaction Queue to store the transactions
             self.transaction_queue = TransactionQueue(
                 env, self, self.consensus)
@@ -43,8 +43,8 @@ class POANode(Node):
         """Builds a new candidate block and propagate it to the network
 
         Jiali: This function is borrowed from bitcoin/node.py, without too much change."""
-        if self.is_mining is False:
-            raise RuntimeError(f'Node {self.location} is not a miner')
+        if self.is_authority is False:
+            raise RuntimeError(f'Node {self.location} is not a authority')
         block_size = self.env.config['poa']['block_size_limit_mb']
         transactions_per_block_dist = self.env.config[
             'poa']['number_transactions_per_block']
@@ -59,7 +59,7 @@ class POANode(Node):
         candidate_block = self._build_candidate_block(pending_txs)
         print(
             f'{self.address} at {time(self.env)}: New candidate block #{candidate_block.header.number} created {candidate_block.header.hash[:8]} with difficulty {candidate_block.header.difficulty}')
-        # Add the candidate block to the chain of the miner node
+        # Add the candidate block to the chain of the authority node
         self.chain.add_block(candidate_block)
         # We need to broadcast the new candidate block across the network
         self.broadcast_new_blocks([candidate_block])
@@ -151,11 +151,11 @@ class POANode(Node):
             self.env.process(self.broadcast(transactions_msg))
 
     def _receive_full_transactions(self, envelope):
-        """Handle full tx received. If node is miner store transactions in a pool (ordered by the gas price)"""
+        """Handle full tx received. If node is authority store transactions in a pool (ordered by the gas price)"""
         transactions = envelope.msg.get('transactions')
         valid_transactions = []
         for tx in transactions:
-            if self.is_mining:
+            if self.is_authority:
                 self.transaction_queue.put(tx)
             else:
                 valid_transactions.append(tx)
@@ -179,7 +179,7 @@ class POANode(Node):
         """Handle new blocks received.
         The destination only receives the hash and number of the block. It is needed to
         ask for the header and body.
-        If node is a miner, we need to interrupt the current candidate block mining process"""
+        If node is a authority, we need to interrupt the current candidate block mining process"""
         new_blocks = envelope.msg['new_blocks']
         print(f'{self.address} at {time(self.env)}: New blocks received {new_blocks}')
         # If the block is already known by a node, it does not need to request the block again

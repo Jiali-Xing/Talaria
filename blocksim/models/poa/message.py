@@ -2,21 +2,16 @@ from blocksim.utils import kB_to_MB
 
 
 class Message:
-    """Defines a model for the network messages of the Ethereum blockchain.
-
-    For each message its calculated the size, taking into account measurements from the live and public network.
-
-    Ethereum Wire Protocol: https://github.com/ethereum/wiki/wiki/Ethereum-Wire-Protocol
-    """
+    # Defines a model for the network messages of the PoA blockchain.
 
     def __init__(self, origin_node):
         self.origin_node = origin_node
         _env = origin_node.env
-        self._message_size = _env.config['ethereum']['message_size_kB']
+        self._message_size = _env.config['poa']['message_size_kB']
 
     def status(self):
-        """ Inform a peer of its current Ethereum state.
-        This message should be sent `after` the initial handshake and `prior` to any ethereum related messages.
+        """ Inform a peer of its current PoA state.
+        This message should be sent `after` the initial handshake and `prior` to any PoA related messages.
         """
         return {
             'id': 'status',

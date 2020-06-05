@@ -32,8 +32,8 @@ class Node:
                  location: str,
                  address: str,
                  chain: Chain,
-                 consensus: Consensus, 
-                 isAuthority):
+                 consensus: Consensus,
+                 is_authority: bool):
         
         self.env = env
         self.network = network
@@ -50,7 +50,7 @@ class Node:
         self.env.data[key] = 0
         
         #Indicate whether the permissioned node is an authority or not
-        self.isAuthority = isAuthority
+        self.is_authority = is_authority
 
     def connect(self, nodes: list):
         """Simulate an acknowledgement phase with given nodes. During simulation the nodes
