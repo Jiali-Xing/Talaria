@@ -11,7 +11,9 @@ class Network:
         self.total_hashrate = 0
         self._nodes = {}
         self._list_nodes = []
+        self._list_authority_nodes = [] #Want to keep track of which nodes are authorities
         self._list_probabilities = []
+        self.authority_index = 0 #Keep track of which authority we're on
 
     def get_node(self, address):
         return self._nodes.get(address)
@@ -26,6 +28,8 @@ class Network:
                 self._list_nodes.append(node)
                 node_prob = node.hashrate / self.total_hashrate
                 self._list_probabilities.append(node_prob)
+            if node.isAuthority: #Put the authority nodes in the authority node list
+                self._list_authority_nodes.append(node)
 
     def start_heartbeat(self):
         """ The "heartbeat" frequency of any blockchain network based on PoW is time difference
@@ -48,7 +52,8 @@ class Network:
             time_between_blocks = round(get_random_values(
                 self.env.delays['time_between_blocks_seconds'])[0], 2)
             yield self.env.timeout(time_between_blocks)
-            orphan_blocks_probability = self.env.config[self.blockchain]['orphan_blocks_probability']
+            
+            '''orphan_blocks_probability = self.env.config[self.blockchain]['orphan_blocks_probability']
             simulate_orphan_blocks = scipy.random.choice(
                 [True, False], 1, p=[orphan_blocks_probability, 1-orphan_blocks_probability])[0]
             if simulate_orphan_blocks:
@@ -59,7 +64,12 @@ class Network:
             else:
                 selected_node = scipy.random.choice(
                     self._list_nodes, 1, replace=False, p=self._list_probabilities)[0]
-                self._build_new_block(selected_node)
+                self._build_new_block(selected_node)'''
+            
+            #Implement new block selection process here
+            selected_node = self._list_authority_nodes[self.authority_index]
+            self.authority_index = self.authority_index + 1
+            self._build_new_block(selected_node)
 
     def _build_new_block(self, node):
         print(

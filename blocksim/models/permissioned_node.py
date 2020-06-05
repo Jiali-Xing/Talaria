@@ -32,7 +32,9 @@ class Node:
                  location: str,
                  address: str,
                  chain: Chain,
-                 consensus: Consensus):
+                 consensus: Consensus, 
+                 isAuthority):
+        
         self.env = env
         self.network = network
         self.location = location
@@ -46,6 +48,9 @@ class Node:
         # Set the monitor to count the forks during the simulation
         key = f'forks_{address}'
         self.env.data[key] = 0
+        
+        #Indicate whether the permissioned node is an authority or not
+        self.isAuthority = isAuthority
 
     def connect(self, nodes: list):
         """Simulate an acknowledgement phase with given nodes. During simulation the nodes
