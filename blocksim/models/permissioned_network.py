@@ -66,7 +66,7 @@ class Network:
                     self._list_nodes, 1, replace=False, p=self._list_probabilities)[0]
                 self._build_new_block(selected_node)'''
             
-            #Implement new block selection process here
+            # Ryan: Implement new block selection process here
             selected_node = self._list_authority_nodes[self.authority_index]
             self.authority_index = self.authority_index + 1
             self._build_new_block(selected_node)

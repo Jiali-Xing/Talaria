@@ -30,7 +30,8 @@ class POANode(Node):
                          location,
                          address,
                          chain,
-                         consensus)
+                         consensus,
+                         is_authority)
         self.temp_headers = {}
         self.network_message = Message(self)
         if is_authority:

@@ -83,10 +83,18 @@ class SimulationWorld:
         """Injects the probability distribution delays in the environment variable to be
         used during the simulation"""
         blockchain_switcher = {
+            'poa': self._set_poa_delays,
             'bitcoin': self._set_bitcoin_delays,
             'ethereum': self._set_ethereum_delays
         }
         return blockchain_switcher.get(self.blockchain, lambda: "Invalid blockchain")()
+
+    def _set_poa_delays(self):
+        self._validate_distribution(
+            self._measured_delays['poa']['tx_validation'],
+            self._measured_delays['poa']['block_validation'],
+            self._measured_delays['poa']['time_between_blocks_seconds'])
+        self._env.delays = self._measured_delays['poa']
 
     def _set_bitcoin_delays(self):
         self._validate_distribution(

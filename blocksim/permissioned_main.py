@@ -1,10 +1,9 @@
 import time
-# from json import dumps as dump_json
 import json
-from world import SimulationWorld
-from dlasc_node_factory import NodeFactory
-from dlasc_transaction_factory import TransactionFactory
-from blocksim.models.network import Network
+from blocksim.world import SimulationWorld
+from blocksim.permissioned_node_factory import NodeFactory
+from blocksim.permissioned_transaction_factory import TransactionFactory
+from blocksim.models.permissioned_network import Network
 
 
 def write_report(world):
@@ -33,7 +32,7 @@ def report_node_chain(world, nodes_list):
 
 def run_model():
     now = int(time.time())  # Current time
-    duration = 180*24*3600  # seconds
+    duration = 3600  # seconds
 
     world = SimulationWorld(
         duration,
