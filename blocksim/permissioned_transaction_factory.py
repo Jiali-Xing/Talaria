@@ -38,18 +38,19 @@ class TransactionFactory:
                 j += 1
             sum_tx = np.sum(node_tx, axis=0)
 
+        blockchain_switcher = {
+            'poa': self._generate_poa_tx,
+            'bitcoin': self._generate_bitcoin_tx,
+            'ethereum': self._generate_ethereum_tx
+        }
+
         for i in range(len(sum_tx)):
             transactions = []
             for _i in range(sum_tx[i]):
                 # Generate a random string to a transaction be distinct from others
                 rand_sign = ''.join(
                     choices(string.ascii_letters + string.digits, k=20))
-                if self._world.blockchain == 'bitcoin':
-                    tx = Transaction('address', 'address', 140, rand_sign, 50)
-                elif self._world.blockchain == 'ethereum':
-                    gas_limit = self._world.env.config['ethereum']['tx_gas_limit']
-                    tx = ETHTransaction('address', 'address',
-                                        140, rand_sign, i, 2, gas_limit)
+                tx = blockchain_switcher.get(self._world.blockchain, lambda: "Invalid blockchain")(rand_sign, i)
                 transactions.append(tx)
             self._world.env.data['created_transactions'] += len(transactions)
             # Choose the given node to broadcast the transaction
@@ -61,3 +62,18 @@ class TransactionFactory:
 
     def _set_interval(self, interval):
         yield self._world.env.timeout(interval)
+
+    def _generate_bitcoin_tx(self, rand_sign, i):
+        tx = Transaction('address', 'address', 140, rand_sign, 50)
+        return tx
+
+    def _generate_ethereum_tx(self, rand_sign, i):
+        gas_limit = self._world.env.config['ethereum']['tx_gas_limit']
+        tx = ETHTransaction('address', 'address',
+                            140, rand_sign, i, 2, gas_limit)
+        return tx
+
+    def _generate_poa_tx(self, rand_sign, i):
+        tx = Transaction('address', 'address', 140, rand_sign, 50)
+        return tx
+

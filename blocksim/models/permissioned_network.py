@@ -8,11 +8,11 @@ class Network:
         self.env = env
         self.name = name
         self.blockchain = self.env.config['blockchain']
-        self.total_hashrate = 0
+        # self.total_hashrate = 0
         self._nodes = {}
         self._list_nodes = []
         self._list_authority_nodes = [] #Want to keep track of which nodes are authorities
-        self._list_probabilities = []
+        # self._list_probabilities = []
         self.authority_index = 0 #Keep track of which authority we're on
 
     def get_node(self, address):
@@ -20,15 +20,15 @@ class Network:
 
     def add_node(self, node):
         self._nodes[node.address] = node
-        self.total_hashrate += node.hashrate
+        # self.total_hashrate += node.hashrate
 
     def _init_lists(self):
         for add, node in self._nodes.items():
             if node.is_authority:
                 self._list_nodes.append(node)
-                node_prob = node.hashrate / self.total_hashrate
-                self._list_probabilities.append(node_prob)
-            if node.is_authority: #Put the authority nodes in the authority node list
+                # node_prob = node.hashrate / self.total_hashrate
+                # self._list_probabilities.append(node_prob)
+            if node.is_authority:  # Put the authority nodes in the authority node list
                 self._list_authority_nodes.append(node)
 
     def start_heartbeat(self):
@@ -67,7 +67,7 @@ class Network:
                 self._build_new_block(selected_node)'''
             
             # Ryan: Implement new block selection process here
-            selected_node = self._list_authority_nodes[self.authority_index]
+            selected_node = self._list_authority_nodes[self.authority_index % len(self._list_authority_nodes)]
             self.authority_index = self.authority_index + 1
             self._build_new_block(selected_node)
 

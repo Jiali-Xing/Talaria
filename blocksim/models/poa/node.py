@@ -16,14 +16,14 @@ class POANode(Node):
                  network: Network,
                  location: str,
                  address: str,
-                 hashrate=0,
+                 # hashrate=0,
                  is_authority=False):
         # Jiali: This function is borrowed from ethereum/node.py, without any change actually.
         # Create the PoA genesis block and init the chain
         genesis = Block(BlockHeader())
         consensus = Consensus(env)
         chain = Chain(env, self, consensus, genesis, BaseDB())
-        self.hashrate = hashrate
+        # self.hashrate = hashrate
         self.is_authority = is_authority
         super().__init__(env,
                          network,

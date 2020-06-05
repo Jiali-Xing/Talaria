@@ -2,6 +2,7 @@ from blocksim.utils import kB_to_MB
 
 
 class Message:
+    # Jiali: Copied from Ethereum
     # Defines a model for the network messages of the PoA blockchain.
 
     def __init__(self, origin_node):
