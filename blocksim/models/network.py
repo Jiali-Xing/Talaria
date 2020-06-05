@@ -22,7 +22,7 @@ class Network:
 
     def _init_lists(self):
         for add, node in self._nodes.items():
-            if node.is_authority:
+            if node.is_mining:
                 self._list_nodes.append(node)
                 node_prob = node.hashrate / self.total_hashrate
                 self._list_probabilities.append(node_prob)
