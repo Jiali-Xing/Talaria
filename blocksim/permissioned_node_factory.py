@@ -32,7 +32,7 @@ class NodeFactory:
 
     def create_poa_nodes(self, miners, non_miners):
         # Jiali: miners/non_miners are set by csv instead, so no need to provide above!
-        with open('Test_DLA1_Input.csv', mode='r') as infile:
+        with open('blocksim/Test_DLA1_Input.csv', mode='r') as infile:
             reader = csv.reader(infile)
             node_region = {rows[0]: rows[3] for rows in reader}
             print(node_region)

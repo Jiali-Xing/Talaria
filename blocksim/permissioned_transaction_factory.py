@@ -24,7 +24,7 @@ class TransactionFactory:
         self._world = world
 
     def broadcast(self, number_of_batches, transactions_per_batch, interval, nodes_list):
-        with open('../DLASC/src/tx_count.json') as f:
+        with open('blocksim/tx_count.json') as f:
             # today = randint(0, 180 - 1)
             today = ' DAY 5 '
             # only one day's tx is too little...
