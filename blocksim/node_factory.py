@@ -1,7 +1,7 @@
 from ast import literal_eval as make_tuple
 from random import randint
-from blocksim.models.bitcoin.node import BTCNode
-from blocksim.models.ethereum.node import ETHNode
+from models.bitcoin.node import BTCNode
+from models.ethereum.node import ETHNode
 
 
 class NodeFactory:

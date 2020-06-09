@@ -1,7 +1,7 @@
 import string
 from random import randint, choices
-from blocksim.models.transaction import Transaction
-from blocksim.models.ethereum.transaction import Transaction as ETHTransaction
+from models.transaction import Transaction
+from models.ethereum.transaction import Transaction as ETHTransaction
 
 
 class TransactionFactory:

@@ -1,7 +1,7 @@
 import string
 from random import randint, choices
-from blocksim.models.transaction import Transaction
-from blocksim.models.ethereum.transaction import Transaction as ETHTransaction
+from models.transaction import Transaction
+from models.ethereum.transaction import Transaction as ETHTransaction
 import json
 import numpy as np
 
@@ -24,7 +24,7 @@ class TransactionFactory:
         self._world = world
 
     def broadcast(self, number_of_batches, transactions_per_batch, interval, nodes_list):
-        with open('blocksim/tx_count.json') as f:
+        with open('tx_count.json') as f:
             # today = randint(0, 180 - 1)
             today = ' DAY 5 '
             # only one day's tx is too little...

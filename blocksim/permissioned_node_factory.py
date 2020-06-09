@@ -1,8 +1,8 @@
 from ast import literal_eval as make_tuple
 from random import randint
-from blocksim.models.bitcoin.node import BTCNode
-from blocksim.models.ethereum.dlasc_node import ETHNode
-from blocksim.models.poa.node import POANode
+from models.bitcoin.node import BTCNode
+from models.ethereum.dlasc_node import ETHNode
+from models.poa.node import POANode
 import csv
 
 
@@ -32,7 +32,7 @@ class NodeFactory:
 
     def create_poa_nodes(self, miners, non_miners):
         # Jiali: miners/non_miners are set by csv instead, so no need to provide above!
-        with open('blocksim/Test_DLA1_Input.csv', mode='r') as infile:
+        with open('Test_DLA1_Input.csv', mode='r') as infile:
             reader = csv.reader(infile)
             node_region = {rows[0]: rows[3] for rows in reader}
             print(node_region)

@@ -1,4 +1,4 @@
-from blocksim.utils import kB_to_MB
+from utils import kB_to_MB
 
 
 class Message:

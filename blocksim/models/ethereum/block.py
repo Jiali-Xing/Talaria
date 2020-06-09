@@ -1,6 +1,6 @@
-from blocksim.utils import encode_hex
-from blocksim.models.block import BlockHeader as BaseBlockHeader
-from blocksim.models.block import Block as BaseBlock
+from utils import encode_hex
+from models.block import BlockHeader as BaseBlockHeader
+from models.block import Block as BaseBlock
 
 
 class BlockHeader(BaseBlockHeader):

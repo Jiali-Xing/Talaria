@@ -1,5 +1,5 @@
 from collections import deque
-from blocksim.utils import time
+from utils import time
 
 
 class TransactionQueue():

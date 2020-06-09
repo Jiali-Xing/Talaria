@@ -2,10 +2,10 @@ import time
 import os
 # from json import dumps as dump_json
 import json
-from blocksim.world import SimulationWorld
-from blocksim.node_factory import NodeFactory
-from blocksim.transaction_factory import TransactionFactory
-from blocksim.models.network import Network
+from world import SimulationWorld
+from node_factory import NodeFactory
+from transaction_factory import TransactionFactory
+from models.network import Network
 
 
 def write_report(world):
@@ -42,11 +42,11 @@ def run_model():
     world = SimulationWorld(
         duration,
         now,
-        'input-parameters/config.json',
-        'input-parameters/latency.json',
-        'input-parameters/throughput-received.json',
-        'input-parameters/throughput-sent.json',
-        'input-parameters/delays.json')
+        '../input-parameters/config.json',
+        '../input-parameters/latency.json',
+        '../input-parameters/throughput-received.json',
+        '../input-parameters/throughput-sent.json',
+        '../input-parameters/delays.json')
 
     # Create the network
     network = Network(world.env, 'NetworkXPTO')

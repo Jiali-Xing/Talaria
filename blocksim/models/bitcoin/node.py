@@ -1,12 +1,12 @@
-from blocksim.models.node import Node
-from blocksim.models.network import Network
-from blocksim.models.bitcoin.message import Message
-from blocksim.models.chain import Chain
-from blocksim.models.db import BaseDB
-from blocksim.models.consensus import Consensus
-from blocksim.models.transaction_queue import TransactionQueue
-from blocksim.models.block import Block, BlockHeader
-from blocksim.utils import time, get_random_values
+from models.node import Node
+from models.network import Network
+from models.bitcoin.message import Message
+from models.chain import Chain
+from models.db import BaseDB
+from models.consensus import Consensus
+from models.transaction_queue import TransactionQueue
+from models.block import Block, BlockHeader
+from utils import time, get_random_values
 
 
 class BTCNode(Node):

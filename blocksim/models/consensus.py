@@ -1,4 +1,4 @@
-from blocksim.utils import get_random_values
+from utils import get_random_values
 
 
 class Consensus:

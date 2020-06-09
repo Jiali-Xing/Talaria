@@ -1,10 +1,10 @@
 import time
 import json
 import os
-from blocksim.world import SimulationWorld
-from blocksim.permissioned_node_factory import NodeFactory
-from blocksim.permissioned_transaction_factory import TransactionFactory
-from blocksim.models.permissioned_network import Network
+from world import SimulationWorld
+from permissioned_node_factory import NodeFactory
+from permissioned_transaction_factory import TransactionFactory
+from models.permissioned_network import Network
 
 
 def write_report(world):
@@ -40,11 +40,11 @@ def run_model():
     world = SimulationWorld(
         duration,
         now,
-        'blocksim/dlasc-input-parameters/config.json',
-        'blocksim/dlasc-input-parameters/latency.json',
-        'blocksim/dlasc-input-parameters/throughput-received.json',
-        'blocksim/dlasc-input-parameters/throughput-sent.json',
-        'blocksim/dlasc-input-parameters/delays.json')
+        'dlasc-input-parameters/config.json',
+        'dlasc-input-parameters/latency.json',
+        'dlasc-input-parameters/throughput-received.json',
+        'dlasc-input-parameters/throughput-sent.json',
+        'dlasc-input-parameters/delays.json')
 
     # Create the network
     network = Network(world.env, 'NetworkXPTO')
