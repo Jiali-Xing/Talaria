@@ -9,8 +9,11 @@ from models.permissioned_network import Network
 
 def write_report(world):
     path = 'output/report.json'
-    if not os.path.exists(path):
-        os.mkdir('output')
+    # The following two lines does not make any sense to me:
+    # It throw error when I have output/ but not report.json
+    # So I removed it
+    # if not os.path.exists(path):
+    #     os.mkdir('output')
     with open(path, 'w') as f:
         # f.write(dump_json(world.env.data))
         json.dump(world.env.data, f, indent=2)
