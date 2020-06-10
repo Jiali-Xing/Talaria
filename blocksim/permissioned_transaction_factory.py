@@ -30,13 +30,14 @@ class TransactionFactory:
             # only one day's tx is too little...
             # Thus I decide to use all tx from 180 days
             all_days_tx = json.load(f)
-            j = 0
+            #j = 0
+            node_tx = []
             # This part sums all tx of 180 days, to make tx larger...
             for key, value in all_days_tx.items():
-                node_tx = np.empty([len(all_days_tx), len(all_days_tx[today][1:])], dtype=np.int64)
-                node_tx[j] = all_days_tx[key][1:]
-                j += 1
-            sum_tx = np.sum(node_tx, axis=0)
+                node_tx.append(all_days_tx[key][1:])
+                node_tx_array = np.array(node_tx)
+                
+            sum_tx = np.sum(node_tx_array, axis=0)
 
         blockchain_switcher = {
             'poa': self._generate_poa_tx,
