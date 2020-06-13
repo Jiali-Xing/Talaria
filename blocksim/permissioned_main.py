@@ -1,7 +1,6 @@
 import json
-import os
-import sys
 import time
+from pathlib import Path
 
 from blocksim.models.permissioned_network import Network
 from blocksim.permissioned_node_factory import NodeFactory
@@ -10,10 +9,11 @@ from blocksim.world import SimulationWorld
 
 
 def write_report(world):
-    path = 'output/report.json'
+    path = Path.cwd() / 'blocksim' / 'output' / 'report.json'
     # if not os.path.exists(path):
     #     os.mkdir('output')
-    with open(os.path.join(sys.path[0], path), 'w') as f:
+
+    with open(path, 'w') as f:
         json.dump(world.env.data, f, indent=2)
 
 def report_node_chain(world, nodes_list):
@@ -41,11 +41,12 @@ def run_model():
     world = SimulationWorld(
         duration,
         now,
-        'dlasc-input-parameters/config.json',
-        'dlasc-input-parameters/latency.json',
-        'dlasc-input-parameters/throughput-received.json',
-        'dlasc-input-parameters/throughput-sent.json',
-        'dlasc-input-parameters/delays.json')
+        Path.cwd() / 'dlasc-input-parameters' / 'config.json',
+        Path.cwd() / 'dlasc-input-parameters' / 'latency.json',
+        Path.cwd() / 'dlasc-input-parameters' / 'throughput-received.json',
+        Path.cwd() / 'dlasc-input-parameters' / 'throughput-sent.json',
+        Path.cwd() / 'dlasc-input-parameters' / 'delays.json'
+        )
 
     # Create the network
     network = Network(world.env, 'NetworkXPTO')
@@ -89,4 +90,7 @@ def run_model():
 
 
 if __name__ == '__main__':
+    main_folder = Path.cwd() / 'blocksim'
+    if not main_folder.exists():
+        raise Exception('Wrong working dir. Should be blocksim-dlasc')
     run_model()

@@ -1,7 +1,6 @@
 import json
-import os
 import string
-import sys
+from pathlib import Path
 from random import choices
 
 import numpy as np
@@ -22,7 +21,10 @@ class TransactionFactory:
         self._world = world
 
     def broadcast(self, number_of_batches, transactions_per_batch, interval, nodes_list):
-        with open(os.path.join(sys.path[0], 'tx_count.json')) as f:
+        path = Path.cwd() / 'blocksim' / 'tx_count.json'
+        if not path.exists():
+            raise Exception('Wrong working dir. Should be blocksim-dlasc')
+        with path.open() as f:
             # today = randint(0, 180 - 1)
             today = ' DAY 5 '
             # only one day's tx is too little...

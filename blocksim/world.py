@@ -29,11 +29,11 @@ class SimulationWorld:
     def __init__(self,
                  sim_duration: int,
                  initial_time: int,
-                 config_file: str,
-                 measured_latency: str,
-                 measured_throughput_received: str,
-                 measured_throughput_sent: str,
-                 measured_delays: str):
+                 config_file,
+                 measured_latency,
+                 measured_throughput_received,
+                 measured_throughput_sent,
+                 measured_delays):
         self._measured_delays = self._read_json_file(measured_delays)
         self._sim_duration = sim_duration
         self._initial_time = initial_time

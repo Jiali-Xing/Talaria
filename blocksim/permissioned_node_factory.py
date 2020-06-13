@@ -1,6 +1,5 @@
 import csv
-import os
-import sys
+from pathlib import Path
 from ast import literal_eval as make_tuple
 from random import randint
 
@@ -35,7 +34,10 @@ class NodeFactory:
 
     def create_poa_nodes(self, miners, non_miners):
         # Jiali: miners/non_miners are set by csv instead, so no need to provide above!
-        with open(os.path.join(sys.path[0], 'Test_DLA1_Input.csv'), 'r') as infile:
+        path = Path.cwd() / 'blocksim' / 'Test_DLA1_Input.csv'
+        if not path.exists():
+            raise Exception('Wrong working dir. Should be blocksim-dlasc')
+        with path.open('r') as infile:
             reader = csv.reader(infile)
             node_region = {rows[0]: rows[3] for rows in reader}
             print(node_region)
