@@ -1,4 +1,4 @@
-from utils import keccak_256, encode_hex
+from blocksim.utils import keccak_256, encode_hex
 
 
 class Transaction:

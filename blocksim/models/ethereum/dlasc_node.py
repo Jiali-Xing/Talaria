@@ -1,12 +1,12 @@
-from models.node import Node
-from models.network import Network
-from models.chain import Chain
-from models.consensus import Consensus
-from models.db import BaseDB
-from models.transaction_queue import TransactionQueue
-from utils import time
-from models.ethereum.block import Block, BlockHeader
-from models.ethereum.message import Message
+from blocksim.models.node import Node
+from blocksim.models.network import Network
+from blocksim.models.chain import Chain
+from blocksim.models.consensus import Consensus
+from blocksim.models.db import BaseDB
+from blocksim.models.transaction_queue import TransactionQueue
+from blocksim.utils import time
+from blocksim.models.ethereum.block import Block, BlockHeader
+from blocksim.models.ethereum.message import Message
 
 
 class ETHNode(Node):

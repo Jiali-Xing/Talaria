@@ -1,9 +1,8 @@
 import time
-# from json import dumps as dump_json
 import json
-from world import SimulationWorld
-from dlasc_node_factory import NodeFactory
-from dlasc_transaction_factory import TransactionFactory
+from blocksim.world import SimulationWorld
+from blocksim.dlasc_node_factory import NodeFactory
+from blocksim.dlasc_transaction_factory import TransactionFactory
 from blocksim.models.network import Network
 
 

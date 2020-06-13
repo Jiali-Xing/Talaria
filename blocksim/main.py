@@ -1,15 +1,14 @@
 import time
 import os
-# from json import dumps as dump_json
 import json
-from world import SimulationWorld
-from node_factory import NodeFactory
-from transaction_factory import TransactionFactory
-from models.network import Network
+from blocksim.world import SimulationWorld
+from blocksim.node_factory import NodeFactory
+from blocksim.transaction_factory import TransactionFactory
+from blocksim.models.network import Network
 
 
 def write_report(world):
-    path = 'output/report.json'
+    path = 'blocksim/output/report.json'
     if not os.path.exists(path):
         os.mkdir('output')
     with open(path, 'w') as f:

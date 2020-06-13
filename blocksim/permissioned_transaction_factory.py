@@ -1,15 +1,13 @@
-import string
-from random import randint, choices
-from models.transaction import Transaction
-from models.ethereum.transaction import Transaction as ETHTransaction
 import json
+import os
+import string
+import sys
+from random import choices
+
 import numpy as np
 
-# Read a dictionary for node_tx
-# node_tx = {}
-# for nodes in range(1, 112):
-#     use integer as key please
-#     node_tx[nodes] = randint(0, 5)
+from blocksim.models.ethereum.transaction import Transaction as ETHTransaction
+from blocksim.models.transaction import Transaction
 
 
 class TransactionFactory:
@@ -24,7 +22,7 @@ class TransactionFactory:
         self._world = world
 
     def broadcast(self, number_of_batches, transactions_per_batch, interval, nodes_list):
-        with open('tx_count.json') as f:
+        with open(os.path.join(sys.path[0], 'tx_count.json')) as f:
             # today = randint(0, 180 - 1)
             today = ' DAY 5 '
             # only one day's tx is too little...

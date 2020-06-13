@@ -1,6 +1,6 @@
 import random
 import itertools
-from utils import time
+from blocksim.utils import time
 
 
 class Chain:

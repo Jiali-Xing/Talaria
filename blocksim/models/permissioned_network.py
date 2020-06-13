@@ -1,6 +1,6 @@
 import scipy
 from simpy import Store
-from utils import get_random_values, time, get_latency_delay
+from blocksim.utils import get_random_values, time, get_latency_delay
 
 
 class Network:

@@ -1,8 +1,8 @@
 from collections import namedtuple
-from models.network import Connection, Network
-from models.chain import Chain
-from models.consensus import Consensus
-from utils import get_received_delay, get_sent_delay, get_latency_delay, time
+from blocksim.models.network import Connection, Network
+from blocksim.models.chain import Chain
+from blocksim.models.consensus import Consensus
+from blocksim.utils import get_received_delay, get_sent_delay, get_latency_delay, time
 
 Envelope = namedtuple('Envelope', 'msg, timestamp, destination, origin')
 

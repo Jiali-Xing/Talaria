@@ -1,21 +1,19 @@
-import time
 import json
 import os
-from world import SimulationWorld
-from permissioned_node_factory import NodeFactory
-from permissioned_transaction_factory import TransactionFactory
-from models.permissioned_network import Network
+import sys
+import time
+
+from blocksim.models.permissioned_network import Network
+from blocksim.permissioned_node_factory import NodeFactory
+from blocksim.permissioned_transaction_factory import TransactionFactory
+from blocksim.world import SimulationWorld
 
 
 def write_report(world):
     path = 'output/report.json'
-    # The following two lines does not make any sense to me:
-    # It throw error when I have output/ but not report.json
-    # So I removed it
     # if not os.path.exists(path):
     #     os.mkdir('output')
-    with open(path, 'w') as f:
-        # f.write(dump_json(world.env.data))
+    with open(os.path.join(sys.path[0], path), 'w') as f:
         json.dump(world.env.data, f, indent=2)
 
 def report_node_chain(world, nodes_list):
