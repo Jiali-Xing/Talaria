@@ -41,11 +41,11 @@ def run_model():
     world = SimulationWorld(
         duration,
         now,
-        '../dlasc-input-parameters/config.json',
-        '../dlasc-input-parameters/latency.json',
-        '../dlasc-input-parameters/throughput-received.json',
-        '../dlasc-input-parameters/throughput-sent.json',
-        '../dlasc-input-parameters/delays.json')
+        'dlasc-input-parameters/config.json',
+        'dlasc-input-parameters/latency.json',
+        'dlasc-input-parameters/throughput-received.json',
+        'dlasc-input-parameters/throughput-sent.json',
+        'dlasc-input-parameters/delays.json')
 
     # Create the network
     network = Network(world.env, 'NetworkXPTO')
