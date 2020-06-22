@@ -56,7 +56,7 @@ class POANode(Node):
             if self.transaction_queue.is_empty():
                 print(
                     f'{self.address} at {time(self.env)}: No more transactions queued.')
-                # Jiali: stop simulation when tx are done
+                # Jiali: stop simulation when tx are done, in order to know whether/when it happens
                 raise Exception('TX all processed')
                 # break
             pending_tx = self.transaction_queue.get()
