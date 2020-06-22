@@ -1,7 +1,7 @@
 import json
 import string
 from pathlib import Path
-from random import choices
+from random import choices, randint
 
 import numpy as np
 
@@ -26,18 +26,20 @@ class TransactionFactory:
             raise Exception('Wrong working dir. Should be blocksim-dlasc')
         with path.open() as f:
             # today = randint(0, 180 - 1)
-            today = ' DAY 5 '
+            today = 'DAY 5 '
+
             # only one day's tx is too little...
             # Thus I decide to use all tx from 180 days
             all_days_tx = json.load(f)
-            #j = 0
+            '''
             node_tx = []
             # This part sums all tx of 180 days, to make tx larger...
             for key, value in all_days_tx.items():
                 node_tx.append(all_days_tx[key][1:])
                 node_tx_array = np.array(node_tx)
-                
-            sum_tx = np.sum(node_tx_array, axis=0)
+            '''
+            # sum_tx = np.sum(node_tx_array, axis=0)
+            sum_tx = all_days_tx[today][1:]
 
         blockchain_switcher = {
             'poa': self._generate_poa_tx,

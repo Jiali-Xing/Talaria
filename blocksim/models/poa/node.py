@@ -54,7 +54,11 @@ class POANode(Node):
         pending_txs = []
         for i in range(transactions_per_block * block_size):
             if self.transaction_queue.is_empty():
-                break
+                print(
+                    f'{self.address} at {time(self.env)}: No more transactions queued.')
+                # Jiali: stop simulation when tx are done
+                raise Exception('TX all processed')
+                # break
             pending_tx = self.transaction_queue.get()
             pending_txs.append(pending_tx)
         candidate_block = self._build_candidate_block(pending_txs)

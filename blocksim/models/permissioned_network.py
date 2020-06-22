@@ -1,6 +1,7 @@
-import scipy
+import simpy
 from simpy import Store
 from blocksim.utils import get_random_values, time, get_latency_delay
+from random import random
 
 
 class Network:
@@ -14,6 +15,8 @@ class Network:
         self._list_authority_nodes = [] #Want to keep track of which nodes are authorities
         # self._list_probabilities = []
         self.authority_index = 0 #Keep track of which authority we're on
+        # Jiali: specify whether to simulate concurrent/out-of-turn block propose.
+        self.out_of_turn_block = False
 
     def get_node(self, address):
         return self._nodes.get(address)
@@ -65,11 +68,32 @@ class Network:
                 selected_node = scipy.random.choice(
                     self._list_nodes, 1, replace=False, p=self._list_probabilities)[0]
                 self._build_new_block(selected_node)'''
-            
+
             # Ryan: Implement new block selection process here
             selected_node = self._list_authority_nodes[self.authority_index % len(self._list_authority_nodes)]
-            self.authority_index = self.authority_index + 1
+            print('If the signer is in-turn, wait for the exact time to arrive, ' +
+                  'sign and broadcast immediately, at %d' % self.env.now)
             self._build_new_block(selected_node)
+            self.authority_index = self.authority_index + 1
+
+            if self.out_of_turn_block:
+                # Jiali: Assume there are n number of authorities able to propose block
+                n = 5
+                out_of_turn_authority = []
+                for leader in range(n):
+                    out_of_turn_authority.append(
+                        self._list_authority_nodes[(self.authority_index + leader) % len(self._list_authority_nodes)]
+                    )
+                print('If the signer is out-of-turn, delay signing by rand(SIGNER_COUNT * 500ms)')
+                for node in out_of_turn_authority:
+                    self.env.process(self._delay_out_turn_signing(node, n))
+
+    def _delay_out_turn_signing(self, node, n):
+        delay = random() * n / 2
+        out_turn_block_propose = simpy.events.Timeout(self.env, delay=delay, value=delay)
+        delayed_time = yield out_turn_block_propose
+        self._build_new_block(node)
+        print('now=%d, out-of-turn node %s proposes after delayed_time=%d' % (self.env.now, node, delayed_time))
 
     def _build_new_block(self, node):
         print(
