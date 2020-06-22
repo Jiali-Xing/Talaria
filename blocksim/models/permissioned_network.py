@@ -78,6 +78,7 @@ class Network:
 
             if self.out_of_turn_block:
                 # Jiali: Assume there are n number of authorities able to propose block
+                # I try to model the out of turn leader, not successful yet
                 n = 5
                 out_of_turn_authority = []
                 for leader in range(n):
