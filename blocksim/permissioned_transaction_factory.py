@@ -22,7 +22,7 @@ class TransactionFactory:
 
     def broadcast(self, number_of_batches, transactions_per_batch, interval, nodes_list):
         # path = Path.cwd() / 'blocksim' / 'tx_count.json'
-        path = Path.cwd() / 'DLASC' / 'simulator-master' / 'src' / 'tx_count_10000.json'
+        path = Path.cwd() / 'DLASC' / 'simulator-master' / 'src' / 'tx_count_UTC.json'
         if not path.exists():
             raise Exception('Wrong working dir. Should be blocksim-dlasc')
         with path.open() as f:
