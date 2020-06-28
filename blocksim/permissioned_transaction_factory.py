@@ -21,12 +21,13 @@ class TransactionFactory:
         self._world = world
 
     def broadcast(self, number_of_batches, transactions_per_batch, interval, nodes_list):
-        path = Path.cwd() / 'blocksim' / 'tx_count.json'
+        # path = Path.cwd() / 'blocksim' / 'tx_count.json'
+        path = Path.cwd() / 'DLASC' / 'simulator-master' / 'src' / 'tx_count_10000.json'
         if not path.exists():
             raise Exception('Wrong working dir. Should be blocksim-dlasc')
         with path.open() as f:
-            # today = randint(0, 180 - 1)
-            today = 'DAY 5 '
+            today = 'DAY ' + str(randint(0, 180 - 1)) + ' '
+            # today = 'DAY 5 '
 
             # only one day's tx is too little...
             # Thus I decide to use all tx from 180 days

@@ -52,13 +52,15 @@ class POANode(Node):
         transactions_per_block = int(
             get_random_values(transactions_per_block_dist)[0])
         pending_txs = []
+        tx_left = True
         for i in range(transactions_per_block * block_size):
             if self.transaction_queue.is_empty():
                 print(
                     f'{self.address} at {time(self.env)}: No more transactions queued.')
                 # Jiali: stop simulation when tx are done, in order to know whether/when it happens
-                raise Exception('TX all processed')
-                # break
+                # raise Exception('TX all processed')
+                tx_left = False
+                break
             pending_tx = self.transaction_queue.get()
             pending_txs.append(pending_tx)
         candidate_block = self._build_candidate_block(pending_txs)
@@ -68,6 +70,7 @@ class POANode(Node):
         self.chain.add_block(candidate_block)
         # We need to broadcast the new candidate block across the network
         self.broadcast_new_blocks([candidate_block])
+        return tx_left
 
     def _build_candidate_block(self, pending_txs):
         # Jiali: This function is borrowed from bitcoin/node.py, without any change actually.
