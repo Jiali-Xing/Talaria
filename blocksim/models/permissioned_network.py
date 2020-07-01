@@ -1,4 +1,5 @@
 import simpy
+from datetime import datetime
 from simpy import Store
 from blocksim.utils import get_random_values, time, get_latency_delay
 from random import random
@@ -12,9 +13,9 @@ class Network:
         # self.total_hashrate = 0
         self._nodes = {}
         self._list_nodes = []
-        self._list_authority_nodes = [] #Want to keep track of which nodes are authorities
+        self._list_authority_nodes = []  # Want to keep track of which nodes are authorities
         # self._list_probabilities = []
-        self.authority_index = 0 #Keep track of which authority we're on
+        self.authority_index = 0  # Keep track of which authority we're on
         # Jiali: specify whether to simulate concurrent/out-of-turn block propose.
         self.out_of_turn_block = False
 
@@ -51,11 +52,12 @@ class Network:
         probability of the node being chosen.
         """
         self._init_lists()
-        while True:
+        tx_left = True
+        while tx_left:
             time_between_blocks = round(get_random_values(
                 self.env.delays['time_between_blocks_seconds'])[0], 2)
             yield self.env.timeout(time_between_blocks)
-            
+
             '''orphan_blocks_probability = self.env.config[self.blockchain]['orphan_blocks_probability']
             simulate_orphan_blocks = scipy.random.choice(
                 [True, False], 1, p=[orphan_blocks_probability, 1-orphan_blocks_probability])[0]
@@ -73,7 +75,7 @@ class Network:
             selected_node = self._list_authority_nodes[self.authority_index % len(self._list_authority_nodes)]
             print('If the signer is in-turn, wait for the exact time to arrive, ' +
                   'sign and broadcast immediately, at %d' % self.env.now)
-            self._build_new_block(selected_node)
+            tx_left = self._build_new_block(selected_node)
             self.authority_index = self.authority_index + 1
 
             if self.out_of_turn_block:
@@ -89,6 +91,8 @@ class Network:
                 for node in out_of_turn_authority:
                     self.env.process(self._delay_out_turn_signing(node, n))
 
+        self.env.data['end_simulation_time'] = datetime.utcfromtimestamp(self.env.now).strftime('%m-%d %H:%M:%S')
+
     def _delay_out_turn_signing(self, node, n):
         delay = random() * n / 2
         out_turn_block_propose = simpy.events.Timeout(self.env, delay=delay, value=delay)
@@ -100,7 +104,7 @@ class Network:
         print(
             f'Network at {time(self.env)}: Node {node.address} selected to broadcast his candidate block')
         # Give orders to the selected node to broadcast his candidate block
-        node.build_new_block()
+        return node.build_new_block()
 
 
 class Connection:

@@ -1,6 +1,7 @@
 import json
 import time
 from pathlib import Path
+from datetime import datetime
 
 from blocksim.models.permissioned_network import Network
 from blocksim.permissioned_node_factory import NodeFactory
@@ -15,6 +16,7 @@ def write_report(world):
 
     with open(path, 'w') as f:
         json.dump(world.env.data, f, indent=2)
+
 
 def report_node_chain(world, nodes_list):
     for node in nodes_list:
@@ -36,7 +38,7 @@ def report_node_chain(world, nodes_list):
 
 def run_model():
     now = int(time.time())  # Current time
-    duration = 300  # seconds
+    duration = 36000  # seconds
 
     world = SimulationWorld(
         duration,
@@ -88,9 +90,36 @@ def run_model():
     report_node_chain(world, nodes_list)
     write_report(world)
 
+    date_format = '%m-%d %H:%M:%S'
+    t_delta = datetime.strptime(world.env.data['end_simulation_time'], date_format) - \
+        datetime.strptime(world.env.data['start_simulation_time'], date_format)
+    return t_delta.seconds
+
 
 if __name__ == '__main__':
     main_folder = Path.cwd() / 'blocksim'
     if not main_folder.exists():
         raise Exception('Wrong working dir. Should be blocksim-dlasc')
-    run_model()
+    trials = 30
+    time_record = []
+    sim_time_record = []
+
+    for i in range(trials):
+        start_time = time.time()
+        simulated_time = run_model()
+        sim_time_record.append(simulated_time)
+        running_time = time.time() - start_time
+        time_record.append(running_time)
+
+    path = Path.cwd() / 'blocksim' / 'output' / 'simulation_time.json'
+    with open(path, 'w') as f:
+        json.dump(sim_time_record, f, indent=2)
+    path = Path.cwd() / 'blocksim' / 'output' / 'running_time.json'
+    with open(path, 'w') as f:
+        json.dump(time_record, f, indent=2)
+
+    # ave_time = np.average(np.array(time_record))
+    # sim_ave_time = np.average(np.array(sim_time_record))
+
+    # print(sim_time_record)
+    # print(ave_time)
