@@ -44,7 +44,7 @@ class NodeFactory:
         # node_id = 0  # Unique ID for each node
         nodes_list = []
         for node_id, region_id in node_region.items():
-            node_address = f'{region_id}-{node_id}'
+            node_address = f'region_{region_id}-no_{node_id}'
             if int(region_id) <= 3:
                 # Create the authority nodes if node is in US
                 mega_hashrate_range = make_tuple('(20, 40)')

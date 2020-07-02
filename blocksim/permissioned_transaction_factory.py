@@ -52,9 +52,10 @@ class TransactionFactory:
             transactions = []
             for _i in range(sum_tx[i]):
                 # Generate a random string to a transaction be distinct from others
-                rand_sign = ''.join(
-                    choices(string.ascii_letters + string.digits, k=20))
-                tx = blockchain_switcher.get(self._world.blockchain, lambda: "Invalid blockchain")(rand_sign, i)
+                # rand_sign = ''.join(
+                #     choices(string.ascii_letters + string.digits, k=20))
+                sign = '- '.join([today, nodes_list[i].address, str(_i), str(self._world.env.data['created_transactions'])])
+                tx = blockchain_switcher.get(self._world.blockchain, lambda: "Invalid blockchain")(sign, i)
                 transactions.append(tx)
             self._world.env.data['created_transactions'] += len(transactions)
             # Choose the given node to broadcast the transaction
