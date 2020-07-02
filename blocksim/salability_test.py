@@ -5,13 +5,17 @@ import json
 
 
 def plot_time():
-    x = np.logspace(0, 4, 5)
+    # x = np.logspace(0, 4, 5)
+    x = np.linspace(1000, 10000, num=10)
+
     y_sim = []
     y_run = []
-    for i in range(5):
-        tx_count = '{:.0f}'.format(x[i])
-        path_sim = Path.cwd() / 'blocksim' / 'output' / ('simulation_time_tx_' + tx_count + '.json')
-        path_run = Path.cwd() / 'blocksim' / 'output' / ('running_time_tx_' + tx_count + '.json')
+    # for i in range(5):
+    #     tx_count = '{:.0f}'.format(x[i])
+    for i in range(1, 11):
+        json_file = 'tx_count_' + str(i) + '000.json'
+        path_sim = Path.cwd() / 'blocksim' / 'output' / ('simulation_time_' + json_file)
+        path_run = Path.cwd() / 'blocksim' / 'output' / ('running_time_' + json_file)
         with path_sim.open() as f:
             y_sim.append(json.load(f))
         with path_run.open() as f:
@@ -29,10 +33,10 @@ def plot_time():
     plt.errorbar(x, ave_sim, yerr=std_sim,
                  label='sim time')
     for i in range(len(x)):
-        plt.text(x[i], ave_run[i]-1.5, "%d" % ave_run[i], ha="center")
+        plt.text(x[i], ave_run[i]+2, "%d" % ave_run[i], ha="center")
         plt.text(x[i], ave_sim[i]+2, "%d" % ave_sim[i], ha="center")
-    plt.xscale('log')
-    plt.yscale('log')
+    # plt.xscale('log')
+    # plt.yscale('log')
     plt.legend(loc='lower right')
     plt.savefig(Path.cwd() / 'blocksim' / 'output' / 'time.png')
     plt.show()
