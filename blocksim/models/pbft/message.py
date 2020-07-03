@@ -21,7 +21,7 @@ class Message:
         """
         return {
             'id': 'status',
-            'protocol_version': 'PV62',
+            'protocol_version': 'ONE',
             'network': self.origin_node.network.name,
             'td': self.origin_node.chain.head.header.difficulty,
             'best_hash': self.origin_node.chain.head.header.hash,
@@ -53,6 +53,7 @@ class Message:
             'size': kB_to_MB(transactions_size)
         }
     
+    #Ryan: Reformat messages to hold info 
     def preprepare(self):
         self.increment_seqno()
         return {

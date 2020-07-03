@@ -13,24 +13,20 @@ class Network:
         self._nodes = {}
         self._list_nodes = []
         self._list_authority_nodes = []  # Want to keep track of which nodes are authorities
-        self.authority_index = 0  # Keep track of which authority we're on
-        # Jiali: specify whether to simulate concurrent/out-of-turn block propose.
-        self.out_of_turn_block = False
-        self.view = 0
+        self.out_of_turn_block = False # Jiali: specify whether to simulate concurrent/out-of-turn block propose.
+        self.view = 0 # Ryan: replace authority_index with view, for terminology, and because we are no longer
+                      # directly iterating through the list of authorities, only when the current leader goes down
 
     def get_node(self, address):
         return self._nodes.get(address)
 
     def add_node(self, node):
         self._nodes[node.address] = node
-        # self.total_hashrate += node.hashrate
-
+    
     def _init_lists(self):
         for add, node in self._nodes.items():
             if node.is_authority:
                 self._list_nodes.append(node)
-                # node_prob = node.hashrate / self.total_hashrate
-                # self._list_probabilities.append(node_prob)
             if node.is_authority:  # Put the authority nodes in the authority node list
                 self._list_authority_nodes.append(node)
 
@@ -60,12 +56,11 @@ class Network:
             # Ryan: deleted commented block of code from original network.py
             # Probably don't need it in every copy of this file!
 
-            # Ryan: Implement new block selection process here
-            selected_node = self._list_authority_nodes[self.authority_index % len(self._list_authority_nodes)]
+            # Ryan: Implement new block selection process here (updated for PBFT 7/3!)
+            selected_node = self._list_authority_nodes[self.view]
             print('If the signer is in-turn, wait for the exact time to arrive, ' +
                   'sign and broadcast immediately, at %d' % self.env.now)
             tx_left = self._build_new_block(selected_node)
-            self.authority_index = self.authority_index + 1
 
             if self.out_of_turn_block:
                 # Jiali: Assume there are n number of authorities able to propose block
