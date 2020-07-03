@@ -10,14 +10,13 @@ class Network:
         self.env = env
         self.name = name
         self.blockchain = self.env.config['blockchain']
-        # self.total_hashrate = 0
         self._nodes = {}
         self._list_nodes = []
         self._list_authority_nodes = []  # Want to keep track of which nodes are authorities
-        # self._list_probabilities = []
         self.authority_index = 0  # Keep track of which authority we're on
         # Jiali: specify whether to simulate concurrent/out-of-turn block propose.
         self.out_of_turn_block = False
+        self.view = 0
 
     def get_node(self, address):
         return self._nodes.get(address)
@@ -58,18 +57,8 @@ class Network:
                 self.env.delays['time_between_blocks_seconds'])[0], 2)
             yield self.env.timeout(time_between_blocks)
 
-            '''orphan_blocks_probability = self.env.config[self.blockchain]['orphan_blocks_probability']
-            simulate_orphan_blocks = scipy.random.choice(
-                [True, False], 1, p=[orphan_blocks_probability, 1-orphan_blocks_probability])[0]
-            if simulate_orphan_blocks:
-                selected_nodes = scipy.random.choice(
-                    self._list_nodes, 2, replace=False, p=self._list_probabilities)
-                for selected_node in selected_nodes:
-                    self._build_new_block(selected_node)
-            else:
-                selected_node = scipy.random.choice(
-                    self._list_nodes, 1, replace=False, p=self._list_probabilities)[0]
-                self._build_new_block(selected_node)'''
+            # Ryan: deleted commented block of code from original network.py
+            # Probably don't need it in every copy of this file!
 
             # Ryan: Implement new block selection process here
             selected_node = self._list_authority_nodes[self.authority_index % len(self._list_authority_nodes)]

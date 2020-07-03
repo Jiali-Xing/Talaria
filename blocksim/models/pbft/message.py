@@ -9,6 +9,11 @@ class Message:
         self.origin_node = origin_node
         _env = origin_node.env
         self._message_size = _env.config['poa']['message_size_kB']
+        self.seqno = 0
+
+    def increment_seqno(self):
+        self.seqno = self.seqno + 1
+        return self.seqno
 
     def status(self):
         """ Inform a peer of its current PoA state.
@@ -47,12 +52,35 @@ class Message:
             'transactions': transactions,
             'size': kB_to_MB(transactions_size)
         }
-
-    def prepare(self, block_number: int, max_headers: int):
+    
+    def preprepare(self):
+        self.increment_seqno()
         return {
-            'id': 'get_headers',
-            'block_number': block_number,
-            'max_headers': max_headers,
+            'id': 'preprepare',
+            'view': self.origin_node.network.view,
+            'seqno': self.seqno,
+            'digest': 0,
+            'size': kB_to_MB(self._message_size['get_headers']) #TODO = create different message sizes
+        }
+    
+    def prepare(self):
+        return {
+            'id': 'prepare',
+            'view': self.origin_node.network.view,
+            'seqno': self.seqno,
+            'digest' : 0, 
+            'replica_id' : self.origin_node.replica_id,
+            'size': kB_to_MB(self._message_size['get_headers'])
+        }
+    
+    #Originally copied from "block_bodies()" below
+    def commit(self, hashes: list):
+        return {
+            'id': 'commit',
+            'view': self.origin_node.network.view,
+            'seqno': self.seqno,
+            'digest' : 0,
+            'replica_id' : self.origin_node.replica_id,
             'size': kB_to_MB(self._message_size['get_headers'])
         }
 
@@ -69,13 +97,6 @@ class Message:
     #         'size': kB_to_MB(block_headers_size)
     #     }
 
-    def commit(self, hashes: list):
-        block_bodies_size = len(hashes) * self._message_size['hash_size']
-        return {
-            'id': 'get_block_bodies',
-            'hashes': hashes,
-            'size': kB_to_MB(block_bodies_size)
-        }
 
     # def block_bodies(self, block_bodies: dict):
     #     """ Reply to `get_block_bodies`. The items in the list are some of the blocks, minus the header.

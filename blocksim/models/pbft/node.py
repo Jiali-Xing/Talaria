@@ -16,8 +16,9 @@ class PBFTNode(Node):
                  network: Network,
                  location: str,
                  address: str,
-                 # hashrate=0,
-                 is_authority=False):
+                 replica_id, 
+                 is_authority=False,
+                 ):
         # Jiali: This function is borrowed from ethereum/node.py, without any change actually.
         # Create the PoA genesis block and init the chain
         genesis = Block(BlockHeader())
@@ -41,6 +42,7 @@ class PBFTNode(Node):
             self.transaction_queue = TransactionQueue(
                 env, self, self.consensus)
         self._handshaking = env.event()
+        self.replica_id = replica_id
 
     def build_new_block(self):
         """Builds a new candidate block and propagate it to the network
