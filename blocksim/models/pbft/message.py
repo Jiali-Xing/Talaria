@@ -29,17 +29,6 @@ class Message:
             'size': kB_to_MB(self._message_size['status'])
         }
 
-    def new_blocks(self, new_blocks: dict):
-        """Advertises one or more new blocks which have appeared on the network"""
-        num_new_block_hashes = len(new_blocks)
-        new_blocks_size = num_new_block_hashes * \
-            self._message_size['hash_size']
-        return {
-            'id': 'new_blocks',
-            'new_blocks': new_blocks,
-            'size': kB_to_MB(new_blocks_size)
-        }
-
     def transactions(self, transactions: list):
         """ Specify (a) transaction(s) that the peer should make sure is included on its
         transaction queue. Nodes must not resend the same transaction to a peer in the same session.
@@ -53,15 +42,21 @@ class Message:
             'size': kB_to_MB(transactions_size)
         }
     
-    #Ryan: Reformat messages to hold info 
-    def preprepare(self):
+    # Ryan: Reformat messages to hold info
+    def pre_prepare(self, new_blocks: dict):
+        # Jiali: pre-prepare should be similar to newblock, so I migrate newblock to here.
+        """Advertises one or more new blocks which have appeared on the network"""
         self.increment_seqno()
+        num_new_block_hashes = len(new_blocks)
+        new_blocks_size = num_new_block_hashes * \
+                          self._message_size['hash_size']
         return {
-            'id': 'preprepare',
+            'id': 'pre-prepare',
             'view': self.origin_node.network.view,
             'seqno': self.seqno,
             'digest': 0,
-            'size': kB_to_MB(self._message_size['get_headers']) #TODO = create different message sizes
+            'new_blocks': new_blocks,
+            'size': kB_to_MB(new_blocks_size)
         }
     
     def prepare(self):
@@ -69,20 +64,20 @@ class Message:
             'id': 'prepare',
             'view': self.origin_node.network.view,
             'seqno': self.seqno,
-            'digest' : 0, 
-            'replica_id' : self.origin_node.replica_id,
+            'digest': 0,
+            'replica_id': self.origin_node.replica_id,
             'size': kB_to_MB(self._message_size['get_headers'])
         }
     
-    #Originally copied from "block_bodies()" below
-    def commit(self, hashes: list):
+    # Originally copied from "block_bodies()" below
+    def commit(self):
         return {
             'id': 'commit',
             'view': self.origin_node.network.view,
             'seqno': self.seqno,
-            'digest' : 0,
-            'replica_id' : self.origin_node.replica_id,
-            'size': kB_to_MB(self._message_size['get_headers'])
+            'digest': 0,
+            'replica_id': self.origin_node.replica_id,
+            'size': kB_to_MB(self._message_size['block_header_size'])
         }
 
     # def block_headers(self, block_headers: list):

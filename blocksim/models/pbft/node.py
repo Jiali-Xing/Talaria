@@ -7,6 +7,7 @@ from blocksim.models.transaction_queue import TransactionQueue
 from blocksim.utils import time, get_random_values
 from blocksim.models.block import Block, BlockHeader
 from blocksim.models.pbft.message import Message
+from collections import defaultdict
 
 
 class PBFTNode(Node):
@@ -24,7 +25,8 @@ class PBFTNode(Node):
         genesis = Block(BlockHeader())
         consensus = Consensus(env)
         chain = Chain(env, self, consensus, genesis, BaseDB())
-        # self.hashrate = hashrate
+        # TODO: determine f (#malicious_nodes) outside this file
+        self.f = 3
         self.is_authority = is_authority
         super().__init__(env,
                          network,
@@ -43,6 +45,13 @@ class PBFTNode(Node):
                 env, self, self.consensus)
         self._handshaking = env.event()
         self.replica_id = replica_id
+        # Jiali: a dict for logging msg/prepare/commit
+        self.log = {
+            'request': {},
+            'prepare': defaultdict(set),
+            'prepared': defaultdict(bool),
+            'committed=local': defaultdict(bool),
+        }
 
     def build_new_block(self):
         """Builds a new candidate block and propagate it to the network
@@ -73,7 +82,7 @@ class PBFTNode(Node):
         # Add the candidate block to the chain of the authority node
         self.chain.add_block(candidate_block)
         # We need to broadcast the new candidate block across the network
-        self.broadcast_new_blocks([candidate_block])
+        self.broadcast_pre_prepare([candidate_block])
         return tx_left
 
     def _build_candidate_block(self, pending_txs):
@@ -93,7 +102,7 @@ class PBFTNode(Node):
         return Block(candidate_block_header, pending_txs)
 
     def _read_envelope(self, envelope):
-        # Jiali: This function is borrowed from ethereum/node.py, without any change actually.
+        # Jiali: This function is borrowed from ethereum/node.py, with minor changes.
         super()._read_envelope(envelope)
         if envelope.msg['id'] == 'status':
             self._receive_status(envelope)
@@ -177,99 +186,59 @@ class PBFTNode(Node):
     ## Blocks       ##
     ##              ##
 
-    def broadcast_new_blocks(self, new_blocks: list):
+    def broadcast_pre_prepare(self, new_blocks: list):
+        # Jiali: Here I renamed broadcast_new_blocks to broadcast_pre_prepare......
         """Specify one or more new blocks which have appeared on the network.
         To be maximally helpful, nodes should inform peers of all blocks that
         they may not be aware of."""
         new_blocks_hashes = {}
         for block in new_blocks:
             new_blocks_hashes[block.header.hash] = block.header.number
-        new_blocks_msg = self.network_message.new_blocks(new_blocks_hashes)
+        new_blocks_msg = self.network_message.pre_prepare(new_blocks_hashes)
+        # TODO: only broadcast to authorities!
         self.env.process(self.broadcast(new_blocks_msg))
 
     def _receive_pre_prepare(self, envelope):
-        """Handle new blocks received.
-        The destination only receives the hash and number of the block. It is needed to
-        ask for the header and body.
-        If node is a authority, we need to interrupt the current candidate block mining process"""
         new_blocks = envelope.msg['new_blocks']
-        print(f'{self.address} at {time(self.env)}: New blocks received {new_blocks}')
-        # If the block is already known by a node, it does not need to request the block again
+        print(f'{self.address} at {time(self.env)}: In pre-prepare phase, new blocks received {new_blocks}')
+        # If the block is already known by a node, it does not need to prepare again.
         block_numbers = []
         for block_hash, block_number in new_blocks.items():
             if self.chain.get_block(block_hash) is None:
                 block_numbers.append(block_number)
-        lowest_block_number = min(block_numbers)
-        self.prepare(
-            lowest_block_number, len(new_blocks), envelope.origin.address)
+                self._send_prepare()
 
-    def prepare(self, block_number: int, max_headers: int, destination_address: str):
-        """Request a node (identified by the `destination_address`) to return block headers.
-        At most `max_headers` items.
-        """
-        get_headers_msg = self.network_message.prepare(
-            block_number, max_headers)
-        self.env.process(self.send(destination_address, get_headers_msg))
-
-    # def _send_block_headers(self, envelope):
-    #     """Send block headers for any node that request it, identified by the `destination_address`"""
-    #     block_number = envelope.msg.get('block_number', 0)
-    #     max_headers = envelope.msg.get('max_headers', 1)
-    #     block_hash = self.chain.get_blockhash_by_number(block_number)
-    #     block_hashes = self.chain.get_blockhashes_from_hash(
-    #         block_hash, max_headers)
-    #     block_headers = []
-    #     for _block_hash in block_hashes:
-    #         block_header = self.chain.get_block(_block_hash).header
-    #         block_headers.append(block_header)
-    #     print(
-    #         f'{self.address} at {time(self.env)}: {len(block_headers)} Block header(s) preapred to send')
-    #     block_headers_msg = self.network_message.block_headers(block_headers)
-    #     self.env.process(self.send(envelope.origin.address, block_headers_msg))
+    def _send_prepare(self):
+        # Send prepare
+        # TODO: add attributes to prepare msg, a PREPARE should have <v, n, d, i>,
+        #  where the seqno should be per block not per node! (so can not be self.seqno)
+        print(
+            f'{self.address} at {time(self.env)}: Prepare prepared to multicast.')
+        prepare_msg = self.network_message.prepare()
+        self.env.process(self.broadcast(prepare_msg))
 
     def _receive_prepare(self, envelope):
-        """Handle block headers received"""
-        block_headers = envelope.msg.get('block_headers')
-        # Save the header in a temporary list
-        hashes = []
-        for header in block_headers:
-            self.temp_headers[header.hash] = header
-            hashes.append(header.hash)
-        self._send_commit(hashes, envelope.origin.address)
+        """Handle prepare received"""
+        seqno = envelope.msg.get('seqno')
+        self.log['prepare'][seqno].add(envelope.origin.address)
+        if len(self.log['prepare'][seqno]) >= 2*self.f:
+            self.log['prepared'][seqno] = True
+            self._send_commit()
 
-    def _send_commit(self, hashes: list, destination_address: str):
+    def _send_commit(self):
         """Request a node (identified by the `destination_address`) to return block bodies.
         Specify a list of `hashes` that we're interested in.
         """
-        get_block_bodies_msg = self.network_message.commit(hashes)
-        self.env.process(self.send(destination_address, get_block_bodies_msg))
-
-    # def _send_commit(self, envelope):
-    #     """Send block bodies for any node that request it, identified by the `envelope.origin.address`.
-    #
-    #     In `envelope.msg.hashes` we obtain a list of hashes of block bodies being requested.
-    #     """
-    #     block_bodies = {}
-    #     for block_hash in envelope.msg.get('hashes'):
-    #         block = self.chain.get_block(block_hash)
-    #         block_bodies[block.header.hash] = block.transactions
-    #     print(
-    #         f'{self.address} at {time(self.env)}: {len(block_bodies)} Block bodies(s) preapred to send')
-    #     block_bodies_msg = self.network_message.block_bodies(block_bodies)
-    #     self.env.process(self.send(envelope.origin.address, block_bodies_msg))
+        commit_msg = self.network_message.commit()
+        self.env.process(self.broadcast(commit_msg))
 
     def _receive_commit(self, envelope):
         """Handle block bodies received
         Assemble the block header in a temporary list with the block body received and
         insert it in the blockchain"""
-        block_hashes = []
-        block_bodies = envelope.msg.get('block_bodies')
-        for block_hash, block_txs in block_bodies.items():
-            block_hashes.append(block_hash[:8])
-            if block_hash in self.temp_headers:
-                header = self.temp_headers.get(block_hash)
-                new_block = Block(header, block_txs)
-                if self.chain.add_block(new_block):
-                    del self.temp_headers[block_hash]
-                    print(
-                        f'{self.address} at {time(self.env)}: Block assembled and added to the tip of the chain  {new_block.header}')
+        seqno = envelope.msg.get('seqno')
+        if self.log['prepared'][seqno] and self.log['committed'][seqno]:
+            # TODO: retrive the block from log
+            self.chain.add_block(new_block)
+            print(
+                f'{self.address} at {time(self.env)}: Block assembled and added to the tip of the chain  {new_block.header}')
