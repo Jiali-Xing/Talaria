@@ -43,20 +43,27 @@ class Message:
         }
     
     # Ryan: Reformat messages to hold info
-    def pre_prepare(self, new_blocks: dict):
+    def pre_prepare(self, new_blocks: dict, block_bodies: dict):
         # Jiali: pre-prepare should be similar to newblock, so I migrate newblock to here.
         """Advertises one or more new blocks which have appeared on the network"""
         self.increment_seqno()
         num_new_block_hashes = len(new_blocks)
         new_blocks_size = num_new_block_hashes * \
                           self._message_size['hash_size']
+
+        txsCount = 0
+        for block_hash, block_txs in block_bodies.items():
+            txsCount += len(block_txs)
+        message_size = (txsCount * self._message_size['tx']) + self._message_size['block_bodies']
+
         return {
             'id': 'pre-prepare',
             'view': self.origin_node.network.view,
             'seqno': self.seqno,
             'digest': 0,
             'new_blocks': new_blocks,
-            'size': kB_to_MB(new_blocks_size)
+            'block_bodies': block_bodies,
+            'size': kB_to_MB(message_size+new_blocks_size)
         }
     
     def prepare(self):

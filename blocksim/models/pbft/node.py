@@ -47,10 +47,10 @@ class PBFTNode(Node):
         self.replica_id = replica_id
         # Jiali: a dict for logging msg/prepare/commit
         self.log = {
-            'request': {},
+            'block': {},
             'prepare': defaultdict(set),
             'prepared': defaultdict(bool),
-            'committed=local': defaultdict(bool),
+            'committed': defaultdict(bool),
         }
 
     def build_new_block(self):
@@ -106,18 +106,16 @@ class PBFTNode(Node):
         super()._read_envelope(envelope)
         if envelope.msg['id'] == 'status':
             self._receive_status(envelope)
-        if envelope.msg['id'] == 'pre-prepare':
-            self._receive_pre_prepare(envelope)
-        if envelope.msg['id'] == 'transactions':
-            self._receive_full_transactions(envelope)
-        # if envelope.msg['id'] == 'get_headers':
-        #     self._send_block_headers(envelope)
-        if envelope.msg['id'] == 'prepare':
-            self._receive_prepare(envelope)
-        # if envelope.msg['id'] == 'get_block_bodies':
-        #     self._send_commit(envelope)
-        if envelope.msg['id'] == 'commit':
-            self._receive_commit(envelope)
+            # Only do these if you are authority
+            if self.is_authority:
+                if envelope.msg['id'] == 'pre-prepare':
+                    self._receive_pre_prepare(envelope)
+                if envelope.msg['id'] == 'transactions':
+                    self._receive_full_transactions(envelope)
+                if envelope.msg['id'] == 'prepare':
+                    self._receive_prepare(envelope)
+                if envelope.msg['id'] == 'commit':
+                    self._receive_commit(envelope)
 
     ##              ##
     ## Handshake    ##
@@ -193,25 +191,36 @@ class PBFTNode(Node):
         they may not be aware of."""
         new_blocks_hashes = {}
         for block in new_blocks:
-            new_blocks_hashes[block.header.hash] = block.header.number
-        new_blocks_msg = self.network_message.pre_prepare(new_blocks_hashes)
+            new_blocks_hashes[block.header.hash] = block.header
+
+        block_bodies = {}
+        for block_hash in new_blocks_hashes:
+            block = self.chain.get_block(block_hash)
+            block_bodies[block.header.hash] = block.transactions
+
+        new_blocks_msg = self.network_message.pre_prepare(new_blocks_hashes, block_bodies)
         # TODO: only broadcast to authorities!
         self.env.process(self.broadcast(new_blocks_msg))
 
     def _receive_pre_prepare(self, envelope):
         new_blocks = envelope.msg['new_blocks']
+        block_bodies = envelope.msg.get('block_bodies')
+
         print(f'{self.address} at {time(self.env)}: In pre-prepare phase, new blocks received {new_blocks}')
         # If the block is already known by a node, it does not need to prepare again.
         block_numbers = []
-        for block_hash, block_number in new_blocks.items():
+        for block_hash, block_header in new_blocks.items():
             if self.chain.get_block(block_hash) is None:
-                block_numbers.append(block_number)
+                block_numbers.append(block_header.number)
                 self._send_prepare()
+                # Jiali: store the block in the log for future commit
+                new_block = Block(block_header, block_bodies[block_hash])
+                self.log['block'][block_hash] = new_block
 
     def _send_prepare(self):
         # Send prepare
         # TODO: add attributes to prepare msg, a PREPARE should have <v, n, d, i>,
-        #  where the seqno should be per block not per node! (so can not be self.seqno)
+        #  where the seqno should be attached to block not per node! (so can not be self.seqno?)
         print(
             f'{self.address} at {time(self.env)}: Prepare prepared to multicast.')
         prepare_msg = self.network_message.prepare()
@@ -238,7 +247,8 @@ class PBFTNode(Node):
         insert it in the blockchain"""
         seqno = envelope.msg.get('seqno')
         if self.log['prepared'][seqno] and self.log['committed'][seqno]:
-            # TODO: retrive the block from log
+            # TODO: retrive the block from log['block']
+            #  but how? Can it be done with only the seqno?
             self.chain.add_block(new_block)
             print(
                 f'{self.address} at {time(self.env)}: Block assembled and added to the tip of the chain  {new_block.header}')
