@@ -1,5 +1,6 @@
 from collections import namedtuple
-from blocksim.models.network import Connection, Network
+from blocksim.models.permissioned_network import Connection, Network
+ #Ryan: wasn't importing permissioned network before 7/5
 from blocksim.models.chain import Chain
 from blocksim.models.consensus import Consensus
 from blocksim.utils import get_received_delay, get_sent_delay, get_latency_delay, time
@@ -220,30 +221,39 @@ class Node:
     def broadcast_to_authorities(self, msg):
         """Broadcast a message to all nodes with an active session"""
         for add, node in self.active_sessions.items():
-            connection = node['connection']
-            origin_node = connection.origin_node
-            destination_node = connection.destination_node
+            
+            #Want to test if the node is an authority
+            authority_addresses = []
+            for auth_node in self.network._list_authority_nodes:
+                authority_addresses.append(auth_node.address)
+                
+            if add in authority_addresses:
+            
+                connection = node['connection']
+                origin_node = connection.origin_node
+                destination_node = connection.destination_node
 
-            # Monitor the transaction propagation on Ethereum
-            if msg['id'] == 'transactions':
-                txs = {}
-                for tx in msg['transactions']:
-                    txs.update({f'{tx.hash[:8]}': self.env.now})
-                self.env.data['tx_propagation'][f'{origin_node.address}_{destination_node.address}'].update(
+                # Monitor the transaction propagation on Ethereum
+                if msg['id'] == 'transactions':
+                    txs = {}
+                    for tx in msg['transactions']:
+                        txs.update({f'{tx.hash[:8]}': self.env.now})
+                    self.env.data['tx_propagation'][f'{origin_node.address}_{destination_node.address}'].update(
                     txs)
-            # Monitor the block propagation on Ethereum
-            if msg['id'] == 'new_blocks':
-                blocks = {}
-                for block_hash in msg['new_blocks']:
-                    blocks.update({f'{block_hash[:8]}': self.env.now})
-                self.env.data['block_propagation'][f'{origin_node.address}_{destination_node.address}'].update(
+                    
+                # Monitor the block propagation on Ethereum
+                if msg['id'] == 'new_blocks':
+                    blocks = {}
+                    for block_hash in msg['new_blocks']:
+                        blocks.update({f'{block_hash[:8]}': self.env.now})
+                    self.env.data['block_propagation'][f'{origin_node.address}_{destination_node.address}'].update(
                     blocks)
 
-            upload_transmission_delay = get_sent_delay(
-                self.env, msg['size'], origin_node.location, destination_node.location)
-            yield self.env.timeout(upload_transmission_delay)
-            envelope = Envelope(msg, time(self.env),
+                upload_transmission_delay = get_sent_delay(
+                    self.env, msg['size'], origin_node.location, destination_node.location)
+                yield self.env.timeout(upload_transmission_delay)
+                envelope = Envelope(msg, time(self.env),
                                 destination_node, origin_node)
-            connection.put(envelope)
+                connection.put(envelope)
             
 
