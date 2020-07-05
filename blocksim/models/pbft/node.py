@@ -25,6 +25,7 @@ class PBFTNode(Node):
         genesis = Block(BlockHeader())
         consensus = Consensus(env)
         chain = Chain(env, self, consensus, genesis, BaseDB())
+
         # TODO: determine f (#malicious_nodes) outside this file
         self.f = 3
         self.is_authority = is_authority
@@ -46,10 +47,12 @@ class PBFTNode(Node):
         self._handshaking = env.event()
         self.replica_id = replica_id
         # Jiali: a dict for logging msg/prepare/commit
+        # TODO: Garbage Collection
         self.log = {
             'block': {},
             'prepare': defaultdict(set),
             'prepared': defaultdict(bool),
+            'commit': defaultdict(set),
             'committed': defaultdict(bool),
         }
 
@@ -191,6 +194,7 @@ class PBFTNode(Node):
         they may not be aware of."""
         new_blocks_hashes = {}
         for block in new_blocks:
+            # Jiali: I changed the header number to header itself, for the sake of flexibility.
             new_blocks_hashes[block.header.hash] = block.header
 
         block_bodies = {}
@@ -203,42 +207,47 @@ class PBFTNode(Node):
         self.env.process(self.broadcast(new_blocks_msg))
 
     def _receive_pre_prepare(self, envelope):
+        seqno = envelope.msg.get('seqno')
         new_blocks = envelope.msg['new_blocks']
-        block_bodies = envelope.msg.get('block_bodies')
+        block_bodies = envelope.msg['block_bodies']
 
         print(f'{self.address} at {time(self.env)}: In pre-prepare phase, new blocks received {new_blocks}')
         # If the block is already known by a node, it does not need to prepare again.
-        block_numbers = []
+        # block_numbers = []
         for block_hash, block_header in new_blocks.items():
             if self.chain.get_block(block_hash) is None:
-                block_numbers.append(block_header.number)
-                self._send_prepare()
+                # block_numbers.append(block_header.number)
+                self._send_prepare(envelope)
                 # Jiali: store the block in the log for future commit
-                new_block = Block(block_header, block_bodies[block_hash])
-                self.log['block'][block_hash] = new_block
+                block = Block(block_header, block_bodies[block_hash])
+                self.log['block'][seqno] = block
 
-    def _send_prepare(self):
+    def _send_prepare(self, envelop):
         # Send prepare
         # TODO: add attributes to prepare msg, a PREPARE should have <v, n, d, i>,
         #  where the seqno should be attached to block not per node! (so can not be self.seqno?)
+        seqno = envelop.msg['seqno']
         print(
             f'{self.address} at {time(self.env)}: Prepare prepared to multicast.')
-        prepare_msg = self.network_message.prepare()
+        prepare_msg = self.network_message.prepare(seqno)
+        self.log['prepare'][seqno].add(self.address)
         self.env.process(self.broadcast(prepare_msg))
 
     def _receive_prepare(self, envelope):
         """Handle prepare received"""
         seqno = envelope.msg.get('seqno')
         self.log['prepare'][seqno].add(envelope.origin.address)
+        # Replica multicasts a COMMIT to the other replicas when prepared becomes true.
         if len(self.log['prepare'][seqno]) >= 2*self.f:
             self.log['prepared'][seqno] = True
-            self._send_commit()
+            self._send_commit(seqno)
 
-    def _send_commit(self):
+    def _send_commit(self, seqno):
         """Request a node (identified by the `destination_address`) to return block bodies.
         Specify a list of `hashes` that we're interested in.
         """
-        commit_msg = self.network_message.commit()
+        commit_msg = self.network_message.commit(seqno)
+        self.log['commit'][seqno].add(self.address)
         self.env.process(self.broadcast(commit_msg))
 
     def _receive_commit(self, envelope):
@@ -246,9 +255,13 @@ class PBFTNode(Node):
         Assemble the block header in a temporary list with the block body received and
         insert it in the blockchain"""
         seqno = envelope.msg.get('seqno')
-        if self.log['prepared'][seqno] and self.log['committed'][seqno]:
-            # TODO: retrive the block from log['block']
-            #  but how? Can it be done with only the seqno?
+        self.log['commit'][seqno].add(envelope.origin.address)
+        # committed-local is true if and only if prepared is true and has accepted 2f+1 commits
+        # (possibly including its own)
+        if self.log['prepared'][seqno] and len(self.log['commit'][seqno]) >= 2*self.f+1:
+            self.log['committed'][seqno] = True
+        if self.log['committed'][seqno]:
+            new_block = self.log['block'][seqno]
             self.chain.add_block(new_block)
             print(
                 f'{self.address} at {time(self.env)}: Block assembled and added to the tip of the chain  {new_block.header}')

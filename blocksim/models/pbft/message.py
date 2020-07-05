@@ -9,6 +9,7 @@ class Message:
         self.origin_node = origin_node
         _env = origin_node.env
         self._message_size = _env.config['poa']['message_size_kB']
+        # TODO: seqno should be different for each message, right? Thus should not be init as 0?
         self.seqno = 0
 
     def increment_seqno(self):
@@ -46,7 +47,12 @@ class Message:
     def pre_prepare(self, new_blocks: dict, block_bodies: dict):
         # Jiali: pre-prepare should be similar to newblock, so I migrate newblock to here.
         """Advertises one or more new blocks which have appeared on the network"""
-        self.increment_seqno()
+        # self.increment_seqno()
+        # Jiali: we can use the number of last block in one message (assume multiple blocks in one pre-prepare is
+        # possible) as seqno!
+        for block in new_blocks:
+            self.seqno = new_blocks[block].number
+
         num_new_block_hashes = len(new_blocks)
         new_blocks_size = num_new_block_hashes * \
                           self._message_size['hash_size']
@@ -66,7 +72,9 @@ class Message:
             'size': kB_to_MB(message_size+new_blocks_size)
         }
     
-    def prepare(self):
+    def prepare(self, seqno):
+        self.seqno = seqno
+        # TODO: change digest to header.hash and change size to message_size['prepare'] (not exist yet)
         return {
             'id': 'prepare',
             'view': self.origin_node.network.view,
@@ -77,7 +85,8 @@ class Message:
         }
     
     # Originally copied from "block_bodies()" below
-    def commit(self):
+    def commit(self, seqno):
+        self.seqno = seqno
         return {
             'id': 'commit',
             'view': self.origin_node.network.view,
