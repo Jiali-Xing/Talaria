@@ -77,11 +77,11 @@ def run_model(json_file='tx_count_10000.json'):
     # Notice that the miner/non_miners this useless here, they're specified in
     # dlasc_node_factory
     nodes_list = node_factory.create_nodes(miners, non_miners)
+    # Start the network heartbeat
+    world.env.process(network.start_heartbeat())
     # Full Connect all nodes
     for node in nodes_list:
         node.connect(nodes_list)
-    # Start the network heartbeat
-    world.env.process(network.start_heartbeat())
 
     transaction_factory = TransactionFactory(world)
     transaction_factory.broadcast(json_file, 15, nodes_list)
