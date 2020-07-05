@@ -1,5 +1,6 @@
 from blocksim.utils import kB_to_MB
 
+global_seqno = 0
 
 class Message:
     # Jiali: Copied from Ethereum
@@ -10,11 +11,12 @@ class Message:
         _env = origin_node.env
         self._message_size = _env.config['poa']['message_size_kB']
         # TODO: seqno should be different for each message, right? Thus should not be init as 0?
-        self.seqno = 0
-
+        # Ryan: Use increment_seqno() to generate new sequence numbers
+        self.seqno = increment_seqno()
+        
     def increment_seqno(self):
-        self.seqno = self.seqno + 1
-        return self.seqno
+        global_seqno = global_seqno + 1
+        return global_seqno
 
     def status(self):
         """ Inform a peer of its current PoA state.
@@ -47,7 +49,6 @@ class Message:
     def pre_prepare(self, new_blocks: dict, block_bodies: dict):
         # Jiali: pre-prepare should be similar to newblock, so I migrate newblock to here.
         """Advertises one or more new blocks which have appeared on the network"""
-        # self.increment_seqno()
         # Jiali: we can use the number of last block in one message (assume multiple blocks in one pre-prepare is
         # possible) as seqno!
         for block in new_blocks:

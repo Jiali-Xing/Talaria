@@ -201,7 +201,8 @@ class PBFTNode(Node):
 
         new_blocks_msg = self.network_message.pre_prepare(new_blocks_hashes, block_bodies)
         # TODO: only broadcast to authorities!
-        self.env.process(self.broadcast(new_blocks_msg))
+        # COMPLETED by Ryan, 7/5 by creating "broadcast_to_authorities()"
+        self.env.process(self.broadcast_to_authorities(new_blocks_msg))
 
     def _receive_pre_prepare(self, envelope):
         seqno = envelope.msg.get('seqno')
