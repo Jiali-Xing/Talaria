@@ -43,6 +43,7 @@ class NodeFactory:
             print(node_region)
         # node_id = 0  # Unique ID for each node
         nodes_list = []
+        replica_id = 0
         for node_id, region_id in node_region.items():
             node_address = f'region_{region_id}-no_{node_id}'
             if int(region_id) <= 3:
@@ -55,7 +56,7 @@ class NodeFactory:
                               self._network,
                               region_id,
                               node_address,
-                              # hashrate,
+                              replica_id,
                               True)
                 nodes_list.append(new)
             else:
@@ -64,8 +65,11 @@ class NodeFactory:
                               self._network,
                               region_id,
                               node_address,
+                              replica_id,
                               False)
                 nodes_list.append(new)
+            replica_id = replica_id + 1
+            
         print(f'NodeFactory: Created {len(nodes_list)} PoA nodes')
         return nodes_list
 
