@@ -13,9 +13,9 @@ class Network:
         self._nodes = {}
         self._list_nodes = []
         self._list_authority_nodes = []  # Want to keep track of which nodes are authorities
-        self.out_of_turn_block = False # Jiali: specify whether to simulate concurrent/out-of-turn block propose.
-        self.view = 0 # Ryan: replace authority_index with view, for terminology, and because we are no longer
-                      # directly iterating through the list of authorities, only when the current leader goes down
+        self.out_of_turn_block = False  # Jiali: specify whether to simulate concurrent/out-of-turn block propose.
+        self.view = 0  # Ryan: replace authority_index with view, for terminology, and because we are no longer
+        # directly iterating through the list of authorities, only when the current leader goes down
 
     def get_node(self, address):
         return self._nodes.get(address)
@@ -25,8 +25,7 @@ class Network:
     
     def _init_lists(self):
         for add, node in self._nodes.items():
-            if node.is_authority:
-                self._list_nodes.append(node)
+            self._list_nodes.append(node)
             if node.is_authority:  # Put the authority nodes in the authority node list
                 self._list_authority_nodes.append(node)
 
@@ -47,7 +46,7 @@ class Network:
         probability of the node being chosen.
         """
         self._init_lists()
-        tx_left = True
+        tx_left = -1
         while tx_left:
             time_between_blocks = round(get_random_values(
                 self.env.delays['time_between_blocks_seconds'])[0], 2)
