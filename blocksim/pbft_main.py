@@ -115,12 +115,12 @@ if __name__ == '__main__':
             running_time = time.time() - start_time
             time_record.append(running_time)
 
-        path = Path.cwd() / 'blocksim' / 'output' / ('simulation_time_' + json_file)
-        with open(path, 'w') as f:
-            json.dump(sim_time_record, f, indent=2)
-        path = Path.cwd() / 'blocksim' / 'output' / ('running_time_' + json_file)
-        with open(path, 'w') as f:
-            json.dump(time_record, f, indent=2)
+        # path = Path.cwd() / 'blocksim' / 'output' / ('simulation_time_' + json_file)
+        # with open(path, 'w') as f:
+        #     json.dump(sim_time_record, f, indent=2)
+        # path = Path.cwd() / 'blocksim' / 'output' / ('running_time_' + json_file)
+        # with open(path, 'w') as f:
+        #     json.dump(time_record, f, indent=2)
 
         break
     # ave_time = np.average(np.array(time_record))
