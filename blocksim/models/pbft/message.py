@@ -12,10 +12,6 @@ class Message:
         # TODO: seqno should be different for each message, right? Thus should not be init as 0?
         self.seqno = 0
 
-    def increment_seqno(self):
-        self.seqno = self.seqno + 1
-        return self.seqno
-
     def status(self):
         """ Inform a peer of its current PoA state.
         This message should be sent `after` the initial handshake and `prior` to any PoA related messages.
@@ -47,7 +43,6 @@ class Message:
     def pre_prepare(self, new_blocks: dict, block_bodies: dict):
         # Jiali: pre-prepare should be similar to newblock, so I migrate newblock to here.
         """Advertises one or more new blocks which have appeared on the network"""
-        # self.increment_seqno()
         # Jiali: we can use the number of last block in one message (assume multiple blocks in one pre-prepare is
         # possible) as seqno!
         for block in new_blocks:

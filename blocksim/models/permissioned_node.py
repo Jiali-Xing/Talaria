@@ -216,3 +216,34 @@ class Node:
             envelope = Envelope(msg, time(self.env),
                                 destination_node, origin_node)
             connection.put(envelope)
+            
+    def broadcast_to_authorities(self, msg):
+        """Broadcast a message to all nodes with an active session"""
+        for add, node in self.active_sessions.items():
+            connection = node['connection']
+            origin_node = connection.origin_node
+            destination_node = connection.destination_node
+
+            # Monitor the transaction propagation on Ethereum
+            if msg['id'] == 'transactions':
+                txs = {}
+                for tx in msg['transactions']:
+                    txs.update({f'{tx.hash[:8]}': self.env.now})
+                self.env.data['tx_propagation'][f'{origin_node.address}_{destination_node.address}'].update(
+                    txs)
+            # Monitor the block propagation on Ethereum
+            if msg['id'] == 'new_blocks':
+                blocks = {}
+                for block_hash in msg['new_blocks']:
+                    blocks.update({f'{block_hash[:8]}': self.env.now})
+                self.env.data['block_propagation'][f'{origin_node.address}_{destination_node.address}'].update(
+                    blocks)
+
+            upload_transmission_delay = get_sent_delay(
+                self.env, msg['size'], origin_node.location, destination_node.location)
+            yield self.env.timeout(upload_transmission_delay)
+            envelope = Envelope(msg, time(self.env),
+                                destination_node, origin_node)
+            connection.put(envelope)
+            
+
