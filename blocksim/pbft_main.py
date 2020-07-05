@@ -36,9 +36,9 @@ def report_node_chain(world, nodes_list):
         }
 
 
-def run_model(json_file='tx_count_10000.json'):
+def run_model(json_file='tx_count_100.json'):
     now = int(time.time())  # Current time
-    duration = 60  # seconds
+    duration = 30  # seconds
 
     world = SimulationWorld(
         duration,
@@ -104,7 +104,7 @@ if __name__ == '__main__':
     for i in range(1, 11):
         json_file = 'tx_count_' + str(i) + '000.json'
 
-        trials = 3
+        trials = 1
         time_record = []
         sim_time_record = []
 
@@ -122,6 +122,7 @@ if __name__ == '__main__':
         with open(path, 'w') as f:
             json.dump(time_record, f, indent=2)
 
+        break
     # ave_time = np.average(np.array(time_record))
     # sim_ave_time = np.average(np.array(sim_time_record))
 
