@@ -193,13 +193,10 @@ class PBFTNode(Node):
         To be maximally helpful, nodes should inform peers of all blocks that
         they may not be aware of."""
         new_blocks_hashes = {}
+        block_bodies = {}
         for block in new_blocks:
             # Jiali: I changed the header number to header itself, for the sake of flexibility.
             new_blocks_hashes[block.header.hash] = block.header
-
-        block_bodies = {}
-        for block_hash in new_blocks_hashes:
-            block = self.chain.get_block(block_hash)
             block_bodies[block.header.hash] = block.transactions
 
         new_blocks_msg = self.network_message.pre_prepare(new_blocks_hashes, block_bodies)

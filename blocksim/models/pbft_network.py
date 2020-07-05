@@ -47,7 +47,7 @@ class Network:
         """
         self._init_lists()
         tx_left = -1
-        while tx_left:
+        while True:
             time_between_blocks = round(get_random_values(
                 self.env.delays['time_between_blocks_seconds'])[0], 2)
             yield self.env.timeout(time_between_blocks)
@@ -59,6 +59,9 @@ class Network:
             selected_node = self._list_authority_nodes[self.view]
             print('If the signer is in-turn, wait for the exact time to arrive, ' +
                   'sign and broadcast immediately, at %d' % self.env.now)
+
+            if not tx_left:
+                break
             tx_left = self._build_new_block(selected_node)
 
             if self.out_of_turn_block:
