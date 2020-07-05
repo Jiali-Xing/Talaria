@@ -1,5 +1,6 @@
 from blocksim.utils import kB_to_MB
 
+global_seqno = 0
 
 class Message:
     # Jiali: Copied from Ethereum
@@ -10,7 +11,12 @@ class Message:
         _env = origin_node.env
         self._message_size = _env.config['poa']['message_size_kB']
         # TODO: seqno should be different for each message, right? Thus should not be init as 0?
-        self.seqno = 0
+        # Ryan: Use increment_seqno() to generate new sequence numbers
+        self.seqno = increment_seqno()
+        
+    def increment_seqno(self):
+        global_seqno = global_seqno + 1
+        return global_seqno
 
     def status(self):
         """ Inform a peer of its current PoA state.
