@@ -255,5 +255,31 @@ class Node:
                 envelope = Envelope(msg, time(self.env),
                                 destination_node, origin_node)
                 connection.put(envelope)
+                
+    def broadcast_to_non_authorities(self, msg):
+        """Broadcast a message to all nodes with an active session"""
+        for add, node in self.active_sessions.items():
+            
+            #Want to test if the node is an authority
+            authority_addresses = []
+            for auth_node in self.network._list_authority_nodes:
+                authority_addresses.append(auth_node.address)
+                
+            if add not in authority_addresses:
+            
+                connection = node['connection']
+                origin_node = connection.origin_node
+                destination_node = connection.destination_node
+
+                # Monitor the transaction propagation on PBFT network
+                if msg['id'] == 'reply':
+                    print("Reply being sent to " + add)
+
+                upload_transmission_delay = get_sent_delay(
+                    self.env, msg['size'], origin_node.location, destination_node.location)
+                yield self.env.timeout(upload_transmission_delay)
+                envelope = Envelope(msg, time(self.env),
+                                destination_node, origin_node)
+                connection.put(envelope)
             
 
