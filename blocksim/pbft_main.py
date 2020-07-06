@@ -38,7 +38,7 @@ def report_node_chain(world, nodes_list):
 
 def run_model(json_file='tx_count_100.json'):
     now = int(time.time())  # Current time
-    duration = 30  # seconds
+    duration = 3600  # seconds
 
     world = SimulationWorld(
         duration,
@@ -102,7 +102,7 @@ if __name__ == '__main__':
         raise Exception('Wrong working dir. Should be blocksim-dlasc')
 
     for i in range(1, 11):
-        json_file = 'tx_count_' + str(i) + '000.json'
+        json_file = 'tx_count_' + str(7) + '000.json'
 
         trials = 1
         time_record = []

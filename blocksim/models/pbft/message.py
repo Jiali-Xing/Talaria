@@ -12,9 +12,12 @@ class Message:
         self._message_size = _env.config['poa']['message_size_kB']
         # TODO: seqno should be different for each message, right? Thus should not be init as 0?
         # Ryan: Use increment_seqno() to generate new sequence numbers
-        self.seqno = increment_seqno()
+        self.seqno = self.increment_seqno()
         
     def increment_seqno(self):
+        # Jiali: I think this function won't work. You can not increment global_seqno in init,
+        # since two messages (e.g., prepare and commit) for same block should have same seqno.
+        global global_seqno
         global_seqno = global_seqno + 1
         return global_seqno
 
@@ -46,13 +49,12 @@ class Message:
         }
     
     # Ryan: Reformat messages to hold info
-    def pre_prepare(self, new_blocks: dict, block_bodies: dict):
+    def pre_prepare(self, seqno, new_blocks: dict, block_bodies: dict):
         # Jiali: pre-prepare should be similar to newblock, so I migrate newblock to here.
         """Advertises one or more new blocks which have appeared on the network"""
         # Jiali: we can use the number of last block in one message (assume multiple blocks in one pre-prepare is
         # possible) as seqno!
-        for block in new_blocks:
-            self.seqno = new_blocks[block].number
+        self.seqno = seqno
 
         num_new_block_hashes = len(new_blocks)
         new_blocks_size = num_new_block_hashes * \
@@ -94,7 +96,7 @@ class Message:
             'seqno': self.seqno,
             'digest': 0,
             'replica_id': self.origin_node.replica_id,
-            'size': kB_to_MB(self._message_size['block_header_size'])
+            'size': kB_to_MB(self._message_size['get_headers'])
         }
 
     # def block_headers(self, block_headers: list):
