@@ -11,9 +11,7 @@ from blocksim.world import SimulationWorld
 
 def write_report(world):
     path = Path.cwd() / 'blocksim' / 'output' / 'report.json'
-    # if not os.path.exists(path):
-    #     os.mkdir('output')
-
+    
     with open(path, 'w') as f:
         json.dump(world.env.data, f, indent=2)
 
@@ -53,24 +51,10 @@ def run_model(json_file='tx_count_100.json'):
     # Create the network
     network = Network(world.env, 'NetworkXPTO')
 
-    miners = {
-        '5': {
-            'how_many': 1,
-            'mega_hashrate_range': "(20, 40)"
-        },
-        '1': {
-            'how_many': 1,
-            'mega_hashrate_range': "(20, 40)"
-        }
-    }
-    non_miners = {
-        '1': {
-            'how_many': 1
-        },
-        '4': {
-            'how_many': 1
-        }
-    }
+    #blocksim requires this specification for creating nodes, but can just
+    #leave them blank
+    miners = {}
+    non_miners = {}
 
     node_factory = NodeFactory(world, network)
     # Create all nodes

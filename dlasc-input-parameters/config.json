@@ -14,7 +14,9 @@
       "tx": 0.2,
       "get_headers": 0.054,
       "header": 0.09,
-      "block_bodies": 0.045
+      "block_bodies": 0.045,
+      "prepare": 0.074,
+      "commit": 0.074
     }
   },
   "bitcoin": {

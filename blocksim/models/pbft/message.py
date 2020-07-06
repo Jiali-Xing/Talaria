@@ -4,7 +4,7 @@ global_seqno = 0
 
 class Message:
     # Jiali: Copied from Ethereum
-    # Defines a model for the network messages of the PoA blockchain.
+    # Defines a model for the network messages of the PBFT blockchain.
 
     def __init__(self, origin_node):
         self.origin_node = origin_node
@@ -67,17 +67,17 @@ class Message:
     
     def prepare(self, seqno):
         self.seqno = seqno
-        # TODO: change digest to header.hash and change size to message_size['prepare'] (not exist yet)
+        # TODO: change digest to header.hash
         return {
             'id': 'prepare',
             'view': self.origin_node.network.view,
             'seqno': self.seqno,
             'digest': 0,
             'replica_id': self.origin_node.replica_id,
-            'size': kB_to_MB(self._message_size['get_headers'])
+            'size': kB_to_MB(self._message_size['prepare'])
         }
     
-    # Originally copied from "block_bodies()" below
+    # Originally copied from "block_bodies()" in the ETH version of message.py
     def commit(self, seqno):
         self.seqno = seqno
         return {
@@ -86,36 +86,6 @@ class Message:
             'seqno': self.seqno,
             'digest': 0,
             'replica_id': self.origin_node.replica_id,
-            'size': kB_to_MB(self._message_size['get_headers'])
+            'size': kB_to_MB(self._message_size['commit'])
         }
 
-    # def block_headers(self, block_headers: list):
-    #     """ Reply to `get_headers` the items in the list are block headers.
-    #     This may contain no block headers if no block headers were able to be returned
-    #     for the `get_headers` message.
-    #     """
-    #     num_headers = len(block_headers)
-    #     block_headers_size = num_headers * self._message_size['header']
-    #     return {
-    #         'id': 'block_headers',
-    #         'block_headers': block_headers,
-    #         'size': kB_to_MB(block_headers_size)
-    #     }
-
-
-    # def block_bodies(self, block_bodies: dict):
-    #     """ Reply to `get_block_bodies`. The items in the list are some of the blocks, minus the header.
-    #     This may contain no items if no blocks were able to be returned for the `get_block_bodies` message.
-    #     """
-    #     txsCount = 0
-    #     for block_hash, block_txs in block_bodies.items():
-    #         txsCount += len(block_txs)
-    #     message_size = (
-    #         txsCount * self._message_size['tx']) + self._message_size['block_bodies']
-    #     print(
-    #         f'block bodies with {txsCount} txs have a message size: {message_size} kB')
-    #     return {
-    #         'id': 'block_bodies',
-    #         'block_bodies': block_bodies,
-    #         'size': kB_to_MB(message_size)
-    #     }

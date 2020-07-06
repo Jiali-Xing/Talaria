@@ -26,9 +26,6 @@ class PBFTNode(Node):
         consensus = Consensus(env)
         chain = Chain(env, self, consensus, genesis, BaseDB())
 
-        # TODO: determine f (#malicious_nodes) outside this file,
-        #  should be (n-1)/3 where n is the number of authorities.
-        self.f = 1
         self.is_authority = is_authority
         super().__init__(env,
                          network,
@@ -206,8 +203,6 @@ class PBFTNode(Node):
             self.log['block'][seqno] = block
 
         new_blocks_msg = self.network_message.pre_prepare(seqno, new_blocks_hashes, block_bodies)
-        # TODO: only broadcast to authorities!
-        # COMPLETED by Ryan, 7/5 by creating "broadcast_to_authorities()"
         self.env.process(self.broadcast(new_blocks_msg))
 
     def _receive_pre_prepare(self, envelope):
@@ -246,7 +241,7 @@ class PBFTNode(Node):
         seqno = envelope.msg.get('seqno')
         self.log['prepare'][seqno].add(envelope.origin.address)
         # Replica multicasts a COMMIT to the other replicas when prepared becomes true.
-        if len(self.log['prepare'][seqno]) >= 2*self.f:
+        if len(self.log['prepare'][seqno]) >= 2*self.network.f:
             self.log['prepared'][seqno] = True
             self._send_commit(seqno)
 
@@ -266,11 +261,12 @@ class PBFTNode(Node):
         self.log['commit'][seqno].add(envelope.origin.address)
         # committed-local is true if and only if prepared is true and has accepted 2f+1 commits
         # (possibly including its own)
-        if self.log['prepared'][seqno] and len(self.log['commit'][seqno]) >= 2*self.f+1:
+        if self.log['prepared'][seqno] and len(self.log['commit'][seqno]) >= 2*self.network.f+1:
             self.log['committed'][seqno] = True
         if self.log['committed'][seqno]:
             # TODO: sometimes, committed block is not in the log, i.e., not received from pre-prepare yet...
             #  It feels weird that commit comes eariler than pre-prepare...
+            # Note from Ryan - Is this just at the end of the sim? If so, this could make sense...
             if self.log['block'][seqno]:
                 new_block = self.log['block'][seqno]
                 self.chain.add_block(new_block)
