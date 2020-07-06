@@ -10,17 +10,7 @@ class Message:
         self.origin_node = origin_node
         _env = origin_node.env
         self._message_size = _env.config['poa']['message_size_kB']
-        # TODO: seqno should be different for each message, right? Thus should not be init as 0?
-        # Ryan: Use increment_seqno() to generate new sequence numbers
-        self.seqno = self.increment_seqno()
         
-    def increment_seqno(self):
-        # Jiali: I think this function won't work. You can not increment global_seqno in init,
-        # since two messages (e.g., prepare and commit) for same block should have same seqno.
-        global global_seqno
-        global_seqno = global_seqno + 1
-        return global_seqno
-
     def status(self):
         """ Inform a peer of its current PoA state.
         This message should be sent `after` the initial handshake and `prior` to any PoA related messages.
