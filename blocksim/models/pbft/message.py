@@ -1,6 +1,5 @@
 from blocksim.utils import kB_to_MB
 
-global_seqno = 0
 
 class Message:
     # Jiali: Copied from Ethereum
@@ -44,7 +43,6 @@ class Message:
         """Advertises one or more new blocks which have appeared on the network"""
         # Jiali: we can use the number of last block in one message (assume multiple blocks in one pre-prepare is
         # possible) as seqno!
-        self.seqno = seqno
 
         num_new_block_hashes = len(new_blocks)
         new_blocks_size = num_new_block_hashes * \
@@ -58,7 +56,7 @@ class Message:
         return {
             'id': 'pre-prepare',
             'view': self.origin_node.network.view,
-            'seqno': self.seqno,
+            'seqno': seqno,
             'digest': 0,
             'new_blocks': new_blocks,
             'block_bodies': block_bodies,
@@ -66,12 +64,11 @@ class Message:
         }
     
     def prepare(self, seqno):
-        self.seqno = seqno
         # TODO: change digest to header.hash
         return {
             'id': 'prepare',
             'view': self.origin_node.network.view,
-            'seqno': self.seqno,
+            'seqno': seqno,
             'digest': 0,
             'replica_id': self.origin_node.replica_id,
             'size': kB_to_MB(self._message_size['prepare'])
@@ -79,11 +76,10 @@ class Message:
     
     # Originally copied from "block_bodies()" in the ETH version of message.py
     def commit(self, seqno):
-        self.seqno = seqno
         return {
             'id': 'commit',
             'view': self.origin_node.network.view,
-            'seqno': self.seqno,
+            'seqno': seqno,
             'digest': 0,
             'replica_id': self.origin_node.replica_id,
             'size': kB_to_MB(self._message_size['commit'])
@@ -99,4 +95,3 @@ class Message:
             'result' : new_block,
             'size' : kB_to_MB(self._message_size['reply'])
         }
-    

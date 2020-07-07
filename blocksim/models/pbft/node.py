@@ -288,4 +288,3 @@ class PBFTNode(Node):
         self.log['reply']['timestamp'].add(envelope.origin.address)
         if len(self.log['reply']['timestamp']) >= (2*self.network.f + 1):
             self.chain.add_block(new_block)
-            
