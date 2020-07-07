@@ -4,6 +4,13 @@ import numpy as np
 import json
 
 
+def memory_usage():
+    # Memory usage in kB
+    with open('/proc/self/status') as f:
+        memusage = f.read().split('VmRSS:')[1].split('\n')[0][:-3]
+    return int(memusage.strip())
+
+
 def plot_time():
     # x = np.logspace(0, 4, 5)
     x = np.linspace(1000, 10000, num=10)
