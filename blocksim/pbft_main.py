@@ -68,7 +68,7 @@ def run_model(json_file='tx_count_100.json'):
         node.connect(nodes_list)
 
     transaction_factory = TransactionFactory(world)
-    transaction_factory.broadcast(json_file, 15, nodes_list)
+    transaction_factory.broadcast(json_file, 10, nodes_list)
 
     world.start_simulation()
     report_node_chain(world, nodes_list)

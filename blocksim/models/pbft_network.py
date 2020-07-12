@@ -16,9 +16,8 @@ class Network:
         self.out_of_turn_block = False  # Jiali: specify whether to simulate concurrent/out-of-turn block propose.
         self.view = 0  # Ryan: replace authority_index with view, for terminology, and because we are no longer
         # directly iterating through the list of authorities, only when the current leader goes down
-        self.f = 0 #Just so you can see that max faulty nodes is a parameter of the network,
-        #it's initiaized below
-
+        self.f = 0  # Just so you can see that max faulty nodes is a parameter of the network,
+        # it's initiaized below
 
     def get_node(self, address):
         return self._nodes.get(address)
@@ -51,7 +50,7 @@ class Network:
         self._init_lists()
         tx_left = -1
         
-        #(Ryan) Initialize max # of faulty nodes after lists have been initialized
+        # (Ryan) Initialize max # of faulty nodes after lists have been initialized
         # Casting the divison result to an int is equivalent to applying floor function
         self.f = int(len(self._list_authority_nodes)/3)
         
@@ -69,7 +68,8 @@ class Network:
                   'sign and broadcast immediately, at %d' % self.env.now)
 
             if not tx_left:
-                break
+                # break
+                pass
             tx_left = self._build_new_block(selected_node)
 
             if self.out_of_turn_block:

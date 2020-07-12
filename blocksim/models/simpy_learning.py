@@ -11,10 +11,10 @@ def car(env):
         trip_duration = 2
         yield env.timeout(trip_duration)
 
-        print('now=%d, this happens in main time line' % env.now)
+        print('now=%d, car need to wait for some time, value=%d' % (env.now, 3))
         event = simpy.events.Timeout(env, delay=3, value=3)
         value = yield event
-        print('now=%d, car need to wait for some time, value=%d' % (env.now, value))
+        print('now=%d, finish waiting, this happens in main time line' % env.now)
 
         if flag:
             env.process(traffic(env))
