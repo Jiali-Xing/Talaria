@@ -52,6 +52,7 @@ class PBFTNode(Node):
             'prepared': defaultdict(bool),
             'commit': defaultdict(set),
             'committed': defaultdict(bool),
+            'reply': defaultdict(set)
         }
 
     def build_new_block(self):
@@ -109,6 +110,8 @@ class PBFTNode(Node):
             self._receive_status(envelope)
         if envelope.msg['id'] == 'transactions':
             self._receive_full_transactions(envelope)
+        if envelope.msg['id'] == 'reply':
+            self._receive_reply(envelope)
         # Only do these if you are authority
         if self.is_authority:
             if envelope.msg['id'] == 'pre-prepare':
@@ -223,7 +226,7 @@ class PBFTNode(Node):
                 new_block = self.log['block'][seqno]
                 self.chain.add_block(new_block)
                 print(
-                    f'{self.address} at {time(self.env)}: Block assembled and added to the tip of the chain  {new_block.header}')
+                    f'{self.address} at {time(self.env)}: Block assembled and added to the top of the chain  {new_block.header}')
 
     def _send_prepare(self, envelop):
         # Send prepare
@@ -265,7 +268,7 @@ class PBFTNode(Node):
             self.log['committed'][seqno] = True
         if self.log['committed'][seqno]:
             # TODO: sometimes, committed block is not in the log, i.e., not received from pre-prepare yet...
-            #  It feels weird that commit comes eariler than pre-prepare...
+            #  It feels weird that commit comes earlier than pre-prepare...
             # Note from Ryan - Is this just at the end of the sim? If so, this could make sense...
             if self.log['block'][seqno]:
                 new_block = self.log['block'][seqno]
@@ -275,16 +278,16 @@ class PBFTNode(Node):
                 print(
                     f'{self.address} at {time(self.env)}: Block assembled and added to the tip of the chain  {new_block.header}')
 
-    #How non-authority nodes handle the receipt of a reply message from an authority
+    # How non-authority nodes handle the receipt of a reply message from an authority
     def _receive_reply(self, envelope):
-        "Handle a non-authority block receiving information about adding a block"
+        # Handle a non-authority block receiving information about adding a block
         if self.is_authority:
             raise RuntimeError(f'Node {self.location} is an authority - they should not receive replies')
             
         new_block = envelope.msg.get('result')
-        #TODO timestamps are just 0 in all replies rn, so program won't be correctly checking for the block
+        # TODO timestamps are just 0 in all replies rn, so program won't be correctly checking for the block
         timestamp = envelope.msg.get('timestamp')    
         
-        self.log['reply']['timestamp'].add(envelope.origin.address)
-        if len(self.log['reply']['timestamp']) >= (2*self.network.f + 1):
+        self.log['reply'][timestamp].add(envelope.origin.address)
+        if len(self.log['reply'][timestamp]) >= (2*self.network.f + 1):
             self.chain.add_block(new_block)

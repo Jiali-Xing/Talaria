@@ -68,8 +68,7 @@ class Network:
                   'sign and broadcast immediately, at %d' % self.env.now)
 
             if not tx_left:
-                # break
-                pass
+                break
             tx_left = self._build_new_block(selected_node)
 
             if self.out_of_turn_block:
