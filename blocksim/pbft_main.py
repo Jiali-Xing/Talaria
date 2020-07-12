@@ -86,7 +86,7 @@ if __name__ == '__main__':
         raise Exception('Wrong working dir. Should be blocksim-dlasc')
 
     for i in range(1, 11):
-        json_file = 'tx_count_' + str(7) + '000.json'
+        json_file = 'tx_count_' + str(3) + '000.json'
 
         trials = 1
         time_record = []

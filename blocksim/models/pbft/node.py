@@ -109,6 +109,8 @@ class PBFTNode(Node):
             self._receive_status(envelope)
         if envelope.msg['id'] == 'transactions':
             self._receive_full_transactions(envelope)
+        if envelope.msg['id'] == 'reply':
+            self._receive_reply(envelope)
         # Only do these if you are authority
         if self.is_authority:
             if envelope.msg['id'] == 'pre-prepare':
@@ -265,7 +267,7 @@ class PBFTNode(Node):
             self.log['committed'][seqno] = True
         if self.log['committed'][seqno]:
             # TODO: sometimes, committed block is not in the log, i.e., not received from pre-prepare yet...
-            #  It feels weird that commit comes eariler than pre-prepare...
+            #  It feels weird that commit comes earlier than pre-prepare...
             # Note from Ryan - Is this just at the end of the sim? If so, this could make sense...
             if self.log['block'][seqno]:
                 new_block = self.log['block'][seqno]
