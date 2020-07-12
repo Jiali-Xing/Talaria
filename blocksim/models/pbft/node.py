@@ -52,6 +52,7 @@ class PBFTNode(Node):
             'prepared': defaultdict(bool),
             'commit': defaultdict(set),
             'committed': defaultdict(bool),
+            'reply': defaultdict(set)
         }
 
     def build_new_block(self):
