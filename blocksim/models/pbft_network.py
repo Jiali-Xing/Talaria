@@ -16,8 +16,8 @@ class Network:
         self.out_of_turn_block = False  # Jiali: specify whether to simulate concurrent/out-of-turn block propose.
         self.view = 0  # Ryan: replace authority_index with view, for terminology, and because we are no longer
         # directly iterating through the list of authorities, only when the current leader goes down
-        self.f = 0 #Just so you can see that max faulty nodes is a parameter of the network,
-        #it's initiaized below
+        self.f = 0  # Just so you can see that max faulty nodes is a parameter of the network,
+        # it's initiaized below
 
 
     def get_node(self, address):

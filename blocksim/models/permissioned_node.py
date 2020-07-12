@@ -242,7 +242,7 @@ class Node:
                     txs)
                     
                 # Monitor the block propagation on Ethereum
-                if msg['id'] == 'new_blocks':
+                if msg['id'] == 'new_blocks' or msg['id'] == 'pre-prepare':
                     blocks = {}
                     for block_hash in msg['new_blocks']:
                         blocks.update({f'{block_hash[:8]}': self.env.now})

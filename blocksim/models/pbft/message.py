@@ -89,9 +89,9 @@ class Message:
         return {
             'id': 'reply',
             'view': self.origin_node.network.view,
-            'timestamp': 0, #placeholder
-            'client': 0, #placeholder
-            'replica_id': 0, #placeholder
-            'result' : new_block,
-            'size' : kB_to_MB(self._message_size['reply'])
+            'timestamp': 0,  # placeholder
+            'client': 0,  # placeholder
+            'replica_id': 0,  # placeholder
+            'result': new_block,
+            'size': kB_to_MB(self._message_size['reply'])
         }
