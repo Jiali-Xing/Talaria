@@ -67,8 +67,8 @@ class Network:
             print('If the signer is in-turn, wait for the exact time to arrive, ' +
                   'sign and broadcast immediately, at %d' % self.env.now)
 
-            if not tx_left:
-                break
+            # if not tx_left:
+            #     break
             tx_left = self._build_new_block(selected_node)
 
             if self.out_of_turn_block:

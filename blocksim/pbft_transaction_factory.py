@@ -59,29 +59,16 @@ class TransactionFactory:
                 sign = '- '.join([today, nodes_list[i].address, str(_i), str(self._world.env.data['created_transactions'])])
                 tx = blockchain_switcher.get(self._world.blockchain, lambda: "Invalid blockchain")(sign, i)
                 transactions.append(tx)
-            self._world.env.data['created_transactions'] += len(transactions)
-            # Choose the given node to broadcast the transaction
-            # self._world.env.process(
-            #     nodes_list[i].broadcast_transactions(transactions))
-            # self._world.env.process(
-            #     nodes_list[randint(0, len(nodes_list)-1)].broadcast_transactions(transactions))
-            self._world.env.process(self._set_interval(nodes_list, i, transactions, interval))
 
-    def _set_interval(self, node_list, i, tx, interval):
-        # j = 0
-        # if i == 0:
-        #     self._world.env.process(
-        #         node_list[i].broadcast_transactions(tx))
-        # print(f'{time(self._world.env)}, this happens in parallel universe')
-        # while j < i:
-        event = simpy.events.Timeout(self._world.env, delay=interval*i, value=interval*i)
+            self._world.env.process(self._set_interval(nodes_list[i], transactions, interval*i))
+
+    def _set_interval(self, node, tx, interval):
+        event = simpy.events.Timeout(self._world.env, delay=interval, value=interval)
         value = yield event
-        print(f'{time(self._world.env)}, now {value} seconds have passed')
-            # j += 1
-        # if j == i:
         self._world.env.process(
-            node_list[i].broadcast_transactions(tx))
-
+            node.broadcast_transactions(tx))
+        print(f'{time(self._world.env)}, now {value} seconds have passed')
+        self._world.env.data['created_transactions'] += len(tx)
         # yield self._world.env.timeout(interval)
 
     def _generate_bitcoin_tx(self, rand_sign, i):

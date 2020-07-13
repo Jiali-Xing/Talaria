@@ -156,7 +156,7 @@ class PBFTNode(Node):
         """Broadcast transactions to all nodes with an active session and mark the hashes
         as known by each node"""
         yield self.connecting  # Wait for all connections
-        yield self._handshaking  # Wait for handshaking to be completed
+        # yield self._handshaking  # Wait for handshaking to be completed
         for node_address, node in self.active_sessions.items():
             for tx in transactions:
                 # Checks if the transaction was previous sent

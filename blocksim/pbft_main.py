@@ -36,7 +36,7 @@ def report_node_chain(world, nodes_list):
 
 def run_model(json_file='tx_count_100.json'):
     now = int(time.time())  # Current time
-    duration = 3600  # seconds
+    duration = 600  # seconds
 
     world = SimulationWorld(
         duration,
@@ -68,7 +68,7 @@ def run_model(json_file='tx_count_100.json'):
         node.connect(nodes_list)
 
     transaction_factory = TransactionFactory(world)
-    transaction_factory.broadcast(json_file, 10, nodes_list)
+    transaction_factory.broadcast(json_file, 5, nodes_list)
 
     world.start_simulation()
     report_node_chain(world, nodes_list)
