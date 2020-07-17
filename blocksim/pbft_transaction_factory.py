@@ -28,24 +28,25 @@ class TransactionFactory:
         if not path.exists():
             raise Exception('Wrong working dir. Should be blocksim-dlasc')
         with path.open() as f:
-            today = 'DAY ' + str(randint(0, 180 - 1)) + ' '
-            # today = 'DAY 5 '
+            # today = 'DAY ' + str(randint(0, 180 - 1)) + ' '
+            today = 'All Days'
 
             # only one day's tx is too little...
             # Thus I decide to use all tx from 180 days
             all_days_tx = json.load(f)
-            '''
+            # '''
             node_tx = []
             # This part sums all tx of 180 days, to make tx larger...
             for key, value in all_days_tx.items():
                 node_tx.append(all_days_tx[key][1:])
                 node_tx_array = np.array(node_tx)
-            '''
-            # sum_tx = np.sum(node_tx_array, axis=0)
-            sum_tx = all_days_tx[today][1:]
+            # '''
+            sum_tx = np.sum(node_tx_array, axis=0)
+            # sum_tx = all_days_tx[today][1:]
 
         blockchain_switcher = {
             'poa': self._generate_poa_tx,
+            'pbft': self._generate_pbft_tx,
             'bitcoin': self._generate_bitcoin_tx,
             'ethereum': self._generate_ethereum_tx
         }
@@ -85,3 +86,6 @@ class TransactionFactory:
         tx = Transaction('address', 'address', 140, rand_sign, 50)
         return tx
 
+    def _generate_pbft_tx(self, rand_sign, i):
+        tx = Transaction('address', 'address', 140, rand_sign, 50)
+        return tx

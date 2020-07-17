@@ -61,9 +61,9 @@ class PBFTNode(Node):
         Jiali: This function is borrowed from bitcoin/node.py, without too much change."""
         if self.is_authority is False:
             raise RuntimeError(f'Node {self.location} is not a authority')
-        block_size = self.env.config['poa']['block_size_limit_mb']
+        block_size = self.env.config['pbft']['block_size_limit_mb']
         transactions_per_block_dist = self.env.config[
-            'poa']['number_transactions_per_block']
+            'pbft']['number_transactions_per_block']
         transactions_per_block = int(
             get_random_values(transactions_per_block_dist)[0])
         pending_txs = []

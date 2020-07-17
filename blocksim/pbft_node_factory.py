@@ -5,6 +5,7 @@ from random import randint
 
 from blocksim.models.bitcoin.node import BTCNode
 from blocksim.models.ethereum.dlasc_node import ETHNode
+from blocksim.models.poa.node import POANode
 from blocksim.models.pbft.node import PBFTNode
 
 
@@ -27,12 +28,50 @@ class NodeFactory:
         blockchain_switcher = {
             'bitcoin': self.create_bitcoin_nodes,
             'ethereum': self.create_ethereum_nodes,
-            'poa': self.create_poa_nodes
+            'poa': self.create_poa_nodes,
+            'pbft': self.create_pbft_nodes
         }
         return blockchain_switcher.get(
             self._world.blockchain, lambda: "Invalid blockchain")(miners, non_miners)
 
     def create_poa_nodes(self, miners, non_miners):
+        # Jiali: miners/non_miners are set by csv instead, so no need to provide above!
+        path = Path.cwd() / 'blocksim' / 'Test_DLA1_Input.csv'
+        if not path.exists():
+            raise Exception('Wrong working dir. Should be blocksim-dlasc')
+        with path.open('r') as infile:
+            reader = csv.reader(infile)
+            node_region = {rows[0]: rows[3] for rows in reader}
+            print(node_region)
+        # node_id = 0  # Unique ID for each node
+        nodes_list = []
+        for node_id, region_id in node_region.items():
+            node_address = f'region_{region_id}-no_{node_id}'
+            if int(region_id) <= 3:
+                # Create the authority nodes if node is in US
+                mega_hashrate_range = make_tuple('(20, 40)')
+                # Jiali: hashrate is no longer needed, but let's keep it in case.
+                # hashrate = randint(
+                #     mega_hashrate_range[0], mega_hashrate_range[1]) * 10 ** 6
+                new = POANode(self._world.env,
+                              self._network,
+                              region_id,
+                              node_address,
+                              # hashrate,
+                              True)
+                nodes_list.append(new)
+            else:
+                # Creat the non-authority nodes if node is oversea
+                new = POANode(self._world.env,
+                              self._network,
+                              region_id,
+                              node_address,
+                              False)
+                nodes_list.append(new)
+        print(f'NodeFactory: Created {len(nodes_list)} PoA nodes')
+        return nodes_list
+
+    def create_pbft_nodes(self, miners, non_miners):
         # Jiali: miners/non_miners are set by csv instead, so no need to provide above!
         path = Path.cwd() / 'blocksim' / 'Test_DLA1_Input.csv'
         if not path.exists():

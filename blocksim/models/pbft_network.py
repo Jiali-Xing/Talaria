@@ -31,7 +31,7 @@ class Network:
             if node.is_authority:  # Put the authority nodes in the authority node list
                 self._list_authority_nodes.append(node)
 
-    def start_heartbeat(self):
+    def start_pbft_heartbeat(self):
         """ The "heartbeat" frequency of any blockchain network based on PoW is time difference
         between blocks. With this function we simulate the network heartbeat frequency.
 
@@ -71,6 +71,8 @@ class Network:
             #     break
             tx_left = self._build_new_block(selected_node)
 
+            self.env.data['end_simulation_time'] = datetime.utcfromtimestamp(self.env.now).strftime('%m-%d %H:%M:%S')
+
             if self.out_of_turn_block:
                 # Jiali: Assume there are n number of authorities able to propose block
                 # I try to model the out of turn leader, not successful yet
@@ -78,7 +80,51 @@ class Network:
                 out_of_turn_authority = []
                 for leader in range(n):
                     out_of_turn_authority.append(
-                        self._list_authority_nodes[(self.authority_index + leader) % len(self._list_authority_nodes)]
+                        self._list_authority_nodes[(self.view + leader) % len(self._list_authority_nodes)]
+                    )
+                print('If the signer is out-of-turn, delay signing by rand(SIGNER_COUNT * 500ms)')
+                for node in out_of_turn_authority:
+                    self.env.process(self._delay_out_turn_signing(node, n))
+
+
+    def start_poa_heartbeat(self):
+        """ The "heartbeat" frequency of any blockchain network based on PoW is time difference
+        between blocks. With this function we simulate the network heartbeat frequency.
+
+        During all the simulation, between time intervals (corresponding to the time between blocks)
+        its chosen 1 or 2 nodes to broadcast a candidate block.
+
+        We choose 2 nodes, when we want to simulate an orphan block situation.
+
+        A fork due to orphan blocks occurs when there are two equally or nearly equally
+        valid candidates for the next block of data in the blockchain.  This event can occur
+        when the two blocks are found close in time, and are submitted to the network at different “ends”
+
+        Each node has a corresponding hashrate. The greater the hashrate, the greater the
+        probability of the node being chosen.
+        """
+        self._init_lists()
+        tx_left = True
+        while tx_left:
+            time_between_blocks = round(get_random_values(
+                self.env.delays['time_between_blocks_seconds'])[0], 2)
+            yield self.env.timeout(time_between_blocks)
+
+            # Ryan: Implement new block selection process here
+            selected_node = self._list_authority_nodes[self.view % len(self._list_authority_nodes)]
+            print('If the signer is in-turn, wait for the exact time to arrive, ' +
+                  'sign and broadcast immediately, at %d' % self.env.now)
+            tx_left = self._build_new_block(selected_node)
+            self.view = self.view + 1
+
+            if self.out_of_turn_block:
+                # Jiali: Assume there are n number of authorities able to propose block
+                # I try to model the out of turn leader, not successful yet
+                n = 5
+                out_of_turn_authority = []
+                for leader in range(n):
+                    out_of_turn_authority.append(
+                        self._list_authority_nodes[(self.view + leader) % len(self._list_authority_nodes)]
                     )
                 print('If the signer is out-of-turn, delay signing by rand(SIGNER_COUNT * 500ms)')
                 for node in out_of_turn_authority:

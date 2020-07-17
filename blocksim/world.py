@@ -84,10 +84,18 @@ class SimulationWorld:
         used during the simulation"""
         blockchain_switcher = {
             'poa': self._set_poa_delays,
+            'pbft': self._set_pbft_delays,
             'bitcoin': self._set_bitcoin_delays,
             'ethereum': self._set_ethereum_delays
         }
         return blockchain_switcher.get(self.blockchain, lambda: "Invalid blockchain")()
+
+    def _set_pbft_delays(self):
+        self._validate_distribution(
+            self._measured_delays['pbft']['tx_validation'],
+            self._measured_delays['pbft']['block_validation'],
+            self._measured_delays['pbft']['time_between_blocks_seconds'])
+        self._env.delays = self._measured_delays['pbft']
 
     def _set_poa_delays(self):
         self._validate_distribution(

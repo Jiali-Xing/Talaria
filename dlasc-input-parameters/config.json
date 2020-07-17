@@ -1,6 +1,23 @@
 {
-  "blockchain": "poa",
+  "blockchain": "pbft",
   "locations": ["1", "2", "3", "4", "5"],
+  "pbft": {
+    "block_size_limit_mb": 1,
+    "number_transactions_per_block": {
+      "name": "beta",
+      "parameters": "(3.4538110963361333, 4.240939683805738, 705.4815204696233, 2159.387403502942)"
+    },
+    "orphan_blocks_probability": 0.0174,
+    "message_size_kB": {
+      "status": 0.2,
+      "hash_size": 0.042,
+      "tx": 0.2,
+      "block_bodies": 0.045,
+      "prepare": 0.074,
+      "commit": 0.074,
+      "reply": 0.021
+    }
+  },
   "poa": {
     "block_size_limit_mb": 1,
     "number_transactions_per_block": {
@@ -14,10 +31,7 @@
       "tx": 0.2,
       "get_headers": 0.054,
       "header": 0.09,
-      "block_bodies": 0.045,
-      "prepare": 0.074,
-      "commit": 0.074,
-      "reply": 0.021
+      "block_bodies": 0.045
     }
   },
   "bitcoin": {

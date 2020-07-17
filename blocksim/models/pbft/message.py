@@ -8,7 +8,7 @@ class Message:
     def __init__(self, origin_node):
         self.origin_node = origin_node
         _env = origin_node.env
-        self._message_size = _env.config['poa']['message_size_kB']
+        self._message_size = _env.config['pbft']['message_size_kB']
         
     def status(self):
         """ Inform a peer of its current PoA state.

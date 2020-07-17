@@ -36,7 +36,7 @@ def report_node_chain(world, nodes_list):
 
 def run_model(json_file='tx_count_100.json'):
     now = int(time.time())  # Current time
-    duration = 600  # seconds
+    duration = 300  # seconds
 
     world = SimulationWorld(
         duration,
@@ -62,13 +62,17 @@ def run_model(json_file='tx_count_100.json'):
     # dlasc_node_factory
     nodes_list = node_factory.create_nodes(miners, non_miners)
     # Start the network heartbeat
-    world.env.process(network.start_heartbeat())
+    if world.blockchain == 'poa':
+        world.env.process(network.start_poa_heartbeat())
+    else:
+        world.env.process(network.start_pbft_heartbeat())
+
     # Full Connect all nodes
     for node in nodes_list:
         node.connect(nodes_list)
 
     transaction_factory = TransactionFactory(world)
-    transaction_factory.broadcast(json_file, 5, nodes_list)
+    transaction_factory.broadcast(json_file, 15, nodes_list)
 
     world.start_simulation()
     report_node_chain(world, nodes_list)

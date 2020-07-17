@@ -1,4 +1,18 @@
 {
+  "pbft": {
+    "tx_validation": {
+      "name": "lognorm",
+      "parameters": "(0.00049512563, 0.004892564, 0.0000425785)"
+    },
+    "block_validation": {
+      "name": "lognorm",
+      "parameters": "(0.11269612563, 0.23958425545, 0.00264255485)"
+    },
+    "time_between_blocks_seconds": {
+      "name": "norm",
+      "parameters": "(15.79712454, 3.00835585)"
+    }
+  },
   "poa": {
     "tx_validation": {
       "name": "lognorm",
