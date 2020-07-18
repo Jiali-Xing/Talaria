@@ -3,7 +3,7 @@ from blocksim.models.permissioned_network import Network
 from blocksim.models.chain import Chain
 from blocksim.models.consensus import Consensus
 from blocksim.models.db import BaseDB
-from blocksim.models.transaction_queue import TransactionQueue
+from blocksim.models.permissoned_transaction_queue import TransactionQueue
 from blocksim.utils import time, get_random_values
 from blocksim.models.block import Block, BlockHeader
 from blocksim.models.poa.message import Message
@@ -141,7 +141,7 @@ class POANode(Node):
         """Broadcast transactions to all nodes with an active session and mark the hashes
         as known by each node"""
         yield self.connecting  # Wait for all connections
-        yield self._handshaking  # Wait for handshaking to be completed
+        # yield self._handshaking  # Wait for handshaking to be completed
         for node_address, node in self.active_sessions.items():
             for tx in transactions:
                 # Checks if the transaction was previous sent
@@ -156,6 +156,9 @@ class POANode(Node):
             print(
                 f'{self.address} at {time(self.env)}: {len(transactions)} transactions ready to be sent')
             transactions_msg = self.network_message.transactions(transactions)
+            # Jiali: I think node should also add tx to their own queue before they broadcast the txs
+            if self.is_authority:
+                self.transaction_queue.add_txs(transactions)
             self.env.process(self.broadcast(transactions_msg))
 
     def _receive_full_transactions(self, envelope):
@@ -266,6 +269,10 @@ class POANode(Node):
                 header = self.temp_headers.get(block_hash)
                 new_block = Block(header, block_txs)
                 if self.chain.add_block(new_block):
+                    # Jiali: now we are ready to remove from queue all the txs received from new block.
+                    if self.is_authority:
+                        self.transaction_queue.remove_txs(block_txs)
+
                     del self.temp_headers[block_hash]
                     print(
                         f'{self.address} at {time(self.env)}: Block assembled and added to the tip of the chain  {new_block.header}')

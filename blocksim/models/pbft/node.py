@@ -3,7 +3,7 @@ from blocksim.models.pbft_network import Network
 from blocksim.models.chain import Chain
 from blocksim.models.consensus import Consensus
 from blocksim.models.db import BaseDB
-from blocksim.models.transaction_queue import TransactionQueue
+from blocksim.models.permissoned_transaction_queue import TransactionQueue
 from blocksim.utils import time, get_random_values
 from blocksim.models.block import Block, BlockHeader
 from blocksim.models.pbft.message import Message
