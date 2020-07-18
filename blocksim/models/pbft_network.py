@@ -105,7 +105,9 @@ class Network:
         """
         self._init_lists()
         tx_left = True
-        while tx_left:
+        empty_block = 0
+
+        while True:
             time_between_blocks = round(get_random_values(
                 self.env.delays['time_between_blocks_seconds'])[0], 2)
             yield self.env.timeout(time_between_blocks)
@@ -116,6 +118,16 @@ class Network:
                   'sign and broadcast immediately, at %d' % self.env.now)
             tx_left = self._build_new_block(selected_node)
             self.view = self.view + 1
+
+            # If we have three consecutive empty block, stop.
+            if not tx_left:
+                empty_block += 1
+                if empty_block >= 3:
+                    break
+            else:
+                empty_block = 0
+
+            self.env.data['end_simulation_time'] = datetime.utcfromtimestamp(self.env.now).strftime('%m-%d %H:%M:%S')
 
             if self.out_of_turn_block:
                 # Jiali: Assume there are n number of authorities able to propose block
@@ -130,7 +142,14 @@ class Network:
                 for node in out_of_turn_authority:
                     self.env.process(self._delay_out_turn_signing(node, n))
 
-        self.env.data['end_simulation_time'] = datetime.utcfromtimestamp(self.env.now).strftime('%m-%d %H:%M:%S')
+
+    def start_heartbeat(self):
+        if self.blockchain == "poa":
+            return self.start_poa_heartbeat()
+        elif self.blockchain == "pbft":
+            return self.start_pbft_heartbeat()
+        else:
+            raise Exception("Model not available.")
 
     def _delay_out_turn_signing(self, node, n):
         delay = random() * n / 2
