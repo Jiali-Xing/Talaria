@@ -47,7 +47,7 @@ def plot_time():
     plt.legend(loc='lower right')
     plt.xlabel('Number of orders per day')
     plt.ylabel('Time (seconds)')
-    plt.savefig(Path.cwd() / 'blocksim' / 'output' / 'time.png')
+    plt.savefig(Path.cwd() / 'blocksim' / 'output' / 'Time.png')
     plt.show()
     plt.close()
 

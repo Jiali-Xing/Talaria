@@ -88,7 +88,7 @@ if __name__ == '__main__':
         os.chdir(Path.parent)
         raise Exception('Wrong working dir. Should be blocksim-dlasc')
 
-    for i in range(9, 11):
+    for i in range(1, 11):
         json_file = 'tx_count_' + str(i) + '000.json'
 
         trials = 30
