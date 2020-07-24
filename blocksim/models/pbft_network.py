@@ -104,7 +104,7 @@ class Network:
         probability of the node being chosen.
         """
         self._init_lists()
-        tx_left = True
+        # tx_left = True
         empty_block = 0
 
         while True:
