@@ -21,8 +21,8 @@ def plot_time():
     #     tx_count = '{:.0f}'.format(x[i])
     for i in range(1, 11):
         json_file = 'tx_count_' + str(i) + '000.json'
-        path_sim = Path.cwd() / 'blocksim' / 'output' / ('simulation_time_' + json_file)
-        path_run = Path.cwd() / 'blocksim' / 'output' / ('running_time_' + json_file)
+        path_sim = Path.cwd() / 'blocksim' / 'output' / ('PoA_simulated_time_' + json_file)
+        path_run = Path.cwd() / 'blocksim' / 'output' / ('PoA_running_time_' + json_file)
         with path_sim.open() as f:
             y_sim.append(json.load(f))
         with path_run.open() as f:
