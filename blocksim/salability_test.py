@@ -36,15 +36,17 @@ def plot_time():
     # print(ave_sim, ave_run)
     fig = plt.figure()
     plt.errorbar(x, ave_run, yerr=std_run,
-                 label='run time')
+                 label='running time')
     plt.errorbar(x, ave_sim, yerr=std_sim,
-                 label='sim time')
+                 label='simulated time')
     for i in range(len(x)):
         plt.text(x[i], ave_run[i]+2, "%d" % ave_run[i], ha="center")
         plt.text(x[i], ave_sim[i]+2, "%d" % ave_sim[i], ha="center")
     # plt.xscale('log')
     # plt.yscale('log')
     plt.legend(loc='lower right')
+    plt.xlabel('Number of orders per day')
+    plt.ylabel('Time (seconds)')
     plt.savefig(Path.cwd() / 'blocksim' / 'output' / 'time.png')
     plt.show()
     plt.close()

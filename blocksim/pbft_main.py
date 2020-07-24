@@ -4,10 +4,6 @@ import time
 from pathlib import Path
 from datetime import datetime
 
-# import sys
-# sys.path.append(Path.parent)
-# print(Path.cwd())
-
 from blocksim.models.pbft_network import Network
 from blocksim.pbft_node_factory import NodeFactory
 from blocksim.pbft_transaction_factory import TransactionFactory
@@ -95,7 +91,7 @@ if __name__ == '__main__':
     for i in range(9, 11):
         json_file = 'tx_count_' + str(i) + '000.json'
 
-        trials = 10
+        trials = 30
         time_record = []
         sim_time_record = []
 
