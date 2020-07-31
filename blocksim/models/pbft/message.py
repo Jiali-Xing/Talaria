@@ -95,3 +95,32 @@ class Message:
             'result': new_block,
             'size': kB_to_MB(self._message_size['reply'])
         }
+
+    def checkpoint(self, seqno):
+        return {
+            'id': 'checkpoint',
+            'seqno': seqno,
+            'digest' : 0,
+            'replica_id' : self.origin_node.replica_id,
+            'size' : kB_to_MB(self._message_size['checkpoint'])
+        }
+    
+    def view_change(self, checkpoint_msg, prepare_msg):
+        return {
+           'id' : "viewchange",
+           'nextview' : self.origin_node.network.view + 1,
+           'checkpoint_messages' : checkpoint_msg,
+           'prepare_messages' : prepare_msg,
+           'replica_id' : self.origin_node.replica_id,
+           'size' : kB_to_MB(self._message_size['viewchange_base'])
+            }
+    
+    def new_view(self, viewchange_msg, preprepare_msg):
+        self.origin_node.network.view = self.origin_node.network.view + 1
+        return {
+            'id' : "newview",
+            'newview' : self.origin_node.network.view,
+            'viewchange_messages' : viewchange_msg,
+            'preprepare_messages' : preprepare_msg,
+            'size' : kB_to_MB(self._mesage_size['newview_base'])
+            }
