@@ -37,7 +37,7 @@ def report_node_chain(world, nodes_list):
 
 def run_model(json_file='tx_count_100.json'):
     now = int(time.time())  # Current time
-    duration = 36000  # seconds
+    duration = 60 # seconds
 
     world = SimulationWorld(
         duration,

@@ -42,6 +42,7 @@ class PBFTNode(Node):
             # Transaction Queue to store the transactions
             self.transaction_queue = TransactionQueue(
                 env, self, self.consensus)
+            self.env.process(self._check_timeout())
         self._handshaking = env.event()
         self.replica_id = replica_id
         # Jiali: a dict for logging msg/prepare/commit
@@ -54,6 +55,13 @@ class PBFTNode(Node):
             'committed': defaultdict(bool),
             'reply': defaultdict(set)
         }
+        
+        #Ryan: We want to model node failures and view changes...
+        self.timedout = False #Indicate if a node has timed out
+        self.timeoutVal = 5 #Some numerical value for a timeout here
+        self.failure = False #Indicate if a node is down or will somehow act Byzantine
+        self.prevLog = {} #Keep track of previous log state so node can detect changes to it
+        
 
     def build_new_block(self):
         """Builds a new candidate block and propagate it to the network
@@ -291,3 +299,20 @@ class PBFTNode(Node):
         self.log['reply'][timestamp].add(envelope.origin.address)
         if len(self.log['reply'][timestamp]) >= (2*self.network.f + 1):
             self.chain.add_block(new_block)
+            
+    ##                                               ##
+    ## View Changes, Checkpoints, and Failures       ##
+    ##                                               ##
+            
+    def _check_timeout(self):
+        while True:
+            if self.prevLog and (len(self.prevLog['block']) == len(self.log['block'])): #No new blocks have been sent to a node + prevLog nonempty
+                self.timedout = True
+                self._send_viewchange()
+                
+            self.prevLog = self.log #track log every timeout check
+                
+            yield self.env.timeout(self.timeoutVal)
+
+    def _send_viewchange(self):
+        return
