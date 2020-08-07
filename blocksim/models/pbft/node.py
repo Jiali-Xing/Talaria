@@ -53,7 +53,9 @@ class PBFTNode(Node):
             'prepared': defaultdict(bool),
             'commit': defaultdict(set),
             'committed': defaultdict(bool),
-            'reply': defaultdict(set)
+            'reply': defaultdict(set),
+            'viewchange': defaultdict(set),
+            'checkpoint': defaultdict(set)
         }
         
         #Ryan: We want to model node failures and view changes...
@@ -314,5 +316,8 @@ class PBFTNode(Node):
                 
             yield self.env.timeout(self.timeoutVal)
 
+    #IMPORTANT NOTE: View changes cannot be correctly implemented until checkpoints are first!
     def _send_viewchange(self):
-        return
+        viewchange_msg = self.network_message.view_change()
+        self.log['viewchange'].add(self.address)
+        self.env.process(self.broadcast_to_authorities(viewchange_msg))
