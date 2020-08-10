@@ -44,7 +44,7 @@ class TransactionFactory:
                 # '''
                 sum_tx = np.sum(node_tx_array, axis=0)
             else:
-                today = 'DAY ' + str(randint(0, 180 - 1)) + ' '
+                today = self._world.env.data['day']
                 sum_tx = all_days_tx[today][1:]
 
         blockchain_switcher = {

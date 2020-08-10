@@ -58,12 +58,10 @@ def get_sent_delay(env, message_size: float, origin: str, destination: str, n=1)
     If `n` is 1 it returns a `float`, if `n > 1` returns an array of `n` floats.
     """
     distribution = env.delays['THROUGHPUT_SENT'][origin][destination]
-    delay = _calc_throughput(distribution, message_size, n)
-    if delay < 0:
-        raise RuntimeError(
-            f'Negative sent delay ({delay}) to origin {origin} and destination {destination}')
-    else:
-        return delay
+    delay = -1
+    while delay < 0:
+        delay = _calc_throughput(distribution, message_size, n)
+    return delay
 
 
 def _calc_throughput(distribution: dict, message_size: float, n):

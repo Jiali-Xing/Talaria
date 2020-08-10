@@ -17,34 +17,43 @@ def plot_time():
 
     y_sim = []
     y_run = []
-    # for i in range(5):
-    #     tx_count = '{:.0f}'.format(x[i])
+    pbft_run = []
     for i in range(1, 11):
         json_file = 'tx_count_' + str(i) + '000.json'
         path_sim = Path.cwd() / 'blocksim' / 'output' / ('PoA_simulated_time_' + json_file)
         path_run = Path.cwd() / 'blocksim' / 'output' / ('PoA_running_time_' + json_file)
+
+        path_run_pbft = Path.cwd() / 'blocksim' / 'output' / ('PBFT_running_time_' + json_file)
         with path_sim.open() as f:
             y_sim.append(json.load(f))
         with path_run.open() as f:
             y_run.append(json.load(f))
-    # print(y_run)
+
+        with path_run_pbft.open() as f:
+            pbft_run.append(json.load(f))
+
     ave_sim = [np.average(sim) for sim in y_sim]
     ave_run = [np.average(run) for run in y_run]
 
+    pbft_ave_run = [np.average(run) for run in pbft_run]
+
     std_sim = [np.std(sim) for sim in y_sim]
     std_run = [np.std(run) for run in y_run]
-    # print(ave_sim, ave_run)
+
+    pbft_std_run = [np.std(run) for run in pbft_run]
     fig = plt.figure()
     plt.errorbar(x, ave_run, yerr=std_run,
-                 label='running time')
+                 label='PoA running time')
     plt.errorbar(x, ave_sim, yerr=std_sim,
                  label='simulated time')
+
+    plt.errorbar(x, pbft_ave_run, yerr=pbft_std_run,
+                 label='PBFT running time')
     for i in range(len(x)):
         plt.text(x[i], ave_run[i]+2, "%d" % ave_run[i], ha="center")
+        plt.text(x[i], pbft_ave_run[i]+2, "%d" % pbft_ave_run[i], ha="center")
         plt.text(x[i], ave_sim[i]+2, "%d" % ave_sim[i], ha="center")
-    # plt.xscale('log')
-    # plt.yscale('log')
-    plt.legend(loc='lower right')
+    plt.legend(loc='upper left')
     plt.xlabel('Number of orders per day')
     plt.ylabel('Time (seconds)')
     plt.savefig(Path.cwd() / 'blocksim' / 'output' / 'Time.png')

@@ -33,7 +33,8 @@ class SimulationWorld:
                  measured_latency,
                  measured_throughput_received,
                  measured_throughput_sent,
-                 measured_delays):
+                 measured_delays,
+                 day: int):
         self._measured_delays = self._read_json_file(measured_delays)
         self._sim_duration = sim_duration
         self._initial_time = initial_time
@@ -55,7 +56,9 @@ class SimulationWorld:
             'end_simulation_time': datetime.utcfromtimestamp(end_simulation).strftime('%m-%d %H:%M:%S'),
             'created_transactions': 0,
             'tx_propagation': {},
-            'block_propagation': {}
+            'block_propagation': {},
+            # Jiali: add day to record the day from which the tx are imported.
+            'day': 'DAY ' + str(day) + ' '
         }
 
     @property
