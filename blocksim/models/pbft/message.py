@@ -89,11 +89,11 @@ class Message:
         return {
             'id': 'reply',
             'view': self.origin_node.network.view,
-            'timestamp': 0,  # placeholder
-            'client': 0,  # placeholder
-            'replica_id': 0,  # placeholder
+            'timestamp': new_block.header.timestamp,  
+            'client': self.origin_node.network.view % len(self.origin_node.network._list_authority_nodes), 
+            'replica_id': self.origin_node.replica_id,  
             'result': new_block,
-            'size': kB_to_MB(self._message_size['reply'])
+            'size': kB_to_MB(self._message_size['reply']) #TODO: Will need to add block size
         }
 
     def checkpoint(self, seqno):
@@ -112,7 +112,7 @@ class Message:
            'checkpoint_messages' : checkpoint_msg,
            'prepare_messages' : prepare_msg,
            'replica_id' : self.origin_node.replica_id,
-           'size' : kB_to_MB(self._message_size['viewchange_base'])
+           'size' : kB_to_MB(self._message_size['viewchange_base']) #TODO Add size of contained messages
             }
     
     def new_view(self, viewchange_msg, preprepare_msg):
@@ -122,5 +122,5 @@ class Message:
             'newview' : self.origin_node.network.view,
             'viewchange_messages' : viewchange_msg,
             'preprepare_messages' : preprepare_msg,
-            'size' : kB_to_MB(self._mesage_size['newview_base'])
+            'size' : kB_to_MB(self._message_size['newview_base']) #TODO Add size of contained messages
             }

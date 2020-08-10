@@ -42,6 +42,7 @@ class PBFTNode(Node):
             # Transaction Queue to store the transactions
             self.transaction_queue = TransactionQueue(
                 env, self, self.consensus)
+            self.env.process(self._check_timeout())
         self._handshaking = env.event()
         self.replica_id = replica_id
         # Jiali: a dict for logging msg/prepare/commit
@@ -52,8 +53,17 @@ class PBFTNode(Node):
             'prepared': defaultdict(bool),
             'commit': defaultdict(set),
             'committed': defaultdict(bool),
-            'reply': defaultdict(set)
+            'reply': defaultdict(set),
+            'viewchange' : defaultdict(set),
+            'checkpoint': defaultdict(set),
         }
+        
+        #Ryan: We want to model node failures and view changes...
+        self.timedout = False #Indicate if a node has timed out
+        self.timeoutVal = 5 #Some numerical value for a timeout here
+        self.failure = False #Indicate if a node is down or will somehow act Byzantine
+        self.prevLog = {} #Keep track of previous log state so node can detect changes to it
+        
 
     def build_new_block(self):
         """Builds a new candidate block and propagate it to the network
@@ -221,6 +231,7 @@ class PBFTNode(Node):
             # Jiali: store the block in the log for future commit
             block = Block(block_header, block_bodies[block_hash])
             self.log['block'][seqno] = block
+            print( 'TIME IS ' + time(self.env))
 
             if self.log['committed'][seqno] and self.chain.get_block(block_hash) is None:
                 new_block = self.log['block'][seqno]
@@ -275,8 +286,7 @@ class PBFTNode(Node):
                 client_reply = self.network_message.client_reply(new_block)
                 self.env.process(self.broadcast_to_non_authorities(client_reply))
                 self.chain.add_block(new_block)
-                print(
-                    f'{self.address} at {time(self.env)}: Block assembled and added to the tip of the chain  {new_block.header}')
+                print(f'{self.address} at {time(self.env)}: Block assembled and added to the tip of the chain  {new_block.header}')
 
     # How non-authority nodes handle the receipt of a reply message from an authority
     def _receive_reply(self, envelope):
@@ -291,3 +301,25 @@ class PBFTNode(Node):
         self.log['reply'][timestamp].add(envelope.origin.address)
         if len(self.log['reply'][timestamp]) >= (2*self.network.f + 1):
             self.chain.add_block(new_block)
+            
+    ##                                               ##
+    ## View Changes, Checkpoints, and Failures       ##
+    ##                                               ##
+            
+    def _check_timeout(self):
+        while True:
+            if self.prevLog and (len(self.prevLog['block']) == len(self.log['block'])): #No new blocks have been sent to a node + prevLog nonempty
+                self.timedout = True
+                self._send_viewchange()
+                
+            self.prevLog = self.log #track log every timeout check
+                
+            yield self.env.timeout(self.timeoutVal)
+
+    #IMPORTANT NOTE: View changes cannot be correctly implemented until checkpoints are first!
+    def _send_viewchange(self):
+        checkpoint_msg = []
+        prepare_msg = []
+        viewchange_msg = self.network_message.view_change(checkpoint_msg, prepare_msg)
+        self.log['viewchange'][self.network.view].add(self.address)
+        self.env.process(self.broadcast_to_authorities(viewchange_msg))
