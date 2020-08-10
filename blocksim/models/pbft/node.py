@@ -301,14 +301,15 @@ class PBFTNode(Node):
         date = str(day)
         file = Path.cwd() / 'blocksim' / 'chains' / (date + self.address)
         with open(file, 'wb') as f:
-            pickle.dump(self.chain, f)
+            pickle.dump((self.chain.head, self.chain.db), f)
 
     def restore_chains(self, day):
         date = str(day)
         file = Path.cwd() / 'blocksim' / 'chains' / (date + self.address)
         with open(file, 'rb') as f:
-            yesterday_chains = pickle.load(f)
-            genesis = yesterday_chains.genesis
-            db = yesterday_chains.db
+            # yesterday_chains = pickle.load(f)
+            # genesis = yesterday_chains.genesis
+            # db = yesterday_chains.db
+            genesis, db = pickle.load(f)
             consensus = Consensus(self.env)
             self.chain = Chain(self.env, self, consensus, genesis, db)
