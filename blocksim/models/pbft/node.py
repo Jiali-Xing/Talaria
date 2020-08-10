@@ -8,6 +8,8 @@ from blocksim.utils import time, get_random_values
 from blocksim.models.block import Block, BlockHeader
 from blocksim.models.pbft.message import Message
 from collections import defaultdict
+from pathlib import Path
+import pickle
 
 
 class PBFTNode(Node):
@@ -58,7 +60,7 @@ class PBFTNode(Node):
             'viewchange' : defaultdict(set),
             'checkpoint': defaultdict(set),
         }
-        
+
         #Ryan: We want to model node failures and view changes...
         self.timedout = False #Indicate if a node has timed out
         self.timeoutVal = 5 #Some numerical time value for a timeout here
@@ -305,32 +307,32 @@ class PBFTNode(Node):
         self.log['reply'][timestamp].add(envelope.origin.address)
         if len(self.log['reply'][timestamp]) >= (2*self.network.f + 1):
             self.chain.add_block(new_block)
-            
+
     ##                                               ##
     ## View Changes, Checkpoints, and Failures       ##
     ##                                               ##
-            
+
     def _check_timeout(self):
         while True:
             if self.prevLog and (len(self.prevLog['block']) == len(self.log['block'])): #No new blocks have been sent to a node + prevLog nonempty
                 self.timedout = True
                 self._send_viewchange()
-                
+
             self.prevLog = self.log #track log every timeout check
-                
+
             yield self.env.timeout(self.timeoutVal)
-            
+
     def _checkpointing(self):
         while True:
             if (((self.currSeqno) % (self.network.checkpoint_size)) == 0): # and (self.currSeqno - self.lastCheckpoint == self.network.checkpoint_size): #Periodically see if we have reached a checkpoint handler
                 self._send_checkpoint_message(self.currSeqno)
             yield self.env.timeout(self.network.checkpoint_delay)
-    
+
     def _send_checkpoint_message(self, seqno):
         checkpoint_msg = self.network_message.checkpoint(seqno)
         self.env.process(self.broadcast_to_authorities(checkpoint_msg))
         self.log['checkpoint'][seqno].add(self.address)
-        
+
     def _receive_checkpoint_message(self, envelope):
         seqno = envelope.msg.get('seqno')
         self.log['checkpoint'][seqno].add(envelope.origin.address)
@@ -347,7 +349,7 @@ class PBFTNode(Node):
                     del self.log['commit'][oldSeqno]
                     del self.log['committed'][oldSeqno]
                 self.lastCheckpoint = seqno
-                        
+
     #IMPORTANT NOTE: View changes cannot be correctly implemented until checkpoints are first!
     def _send_viewchange(self):
         checkpoint_msg = []
@@ -355,3 +357,24 @@ class PBFTNode(Node):
         viewchange_msg = self.network_message.view_change(checkpoint_msg, prepare_msg)
         self.log['viewchange'][self.network.view].add(self.address)
         self.env.process(self.broadcast_to_authorities(viewchange_msg))
+
+    ##              ##
+    ## Chains       ##
+    ##              ##
+
+    def save_chains(self, day):
+        date = str(day)
+        file = Path.cwd() / 'blocksim' / 'chains' / (date + self.address)
+        with open(file, 'wb') as f:
+            pickle.dump((self.chain.head, self.chain.db), f)
+
+    def restore_chains(self, day):
+        date = str(day)
+        file = Path.cwd() / 'blocksim' / 'chains' / (date + self.address)
+        with open(file, 'rb') as f:
+            # yesterday_chains = pickle.load(f)
+            # genesis = yesterday_chains.genesis
+            # db = yesterday_chains.db
+            genesis, db = pickle.load(f)
+            consensus = Consensus(self.env)
+            self.chain = Chain(self.env, self, consensus, genesis, db)

@@ -34,7 +34,11 @@ def report_node_chain(world, nodes_list):
             'chain_list': chain_list
         }
 
-def run_model(json_file='tx_count_100.json', day=150):
+
+def run_model(json_file='tx_count_100.json', day=1):
+    if day > 1:
+        run_model(json_file, day-1)
+
     now = int(time.time())  # Current time
     duration = 3600  # seconds
 
@@ -68,13 +72,18 @@ def run_model(json_file='tx_count_100.json', day=150):
     # Full Connect all nodes
     for node in nodes_list:
         node.connect(nodes_list)
+        if day > 1:
+            node.restore_chains(day-1)
 
     transaction_factory = TransactionFactory(world)
-    transaction_factory.broadcast(json_file, 0, nodes_list)
+    transaction_factory.broadcast(json_file, 9, nodes_list)
 
     world.start_simulation()
     report_node_chain(world, nodes_list)
     write_report(world)
+
+    for node in nodes_list:
+        node.save_chains(day)
 
     date_format = '%m-%d %H:%M:%S'
     t_delta = datetime.strptime(world.env.data['end_simulation_time'], date_format) - \
@@ -88,7 +97,8 @@ if __name__ == '__main__':
         os.chdir(Path.parent)
         raise Exception('Wrong working dir. Should be blocksim-dlasc')
 
-    for i in range(1, 2):
+    # for i in range(1, 11):
+    for i in [10]:
         json_file = 'tx_count_' + str(i) + '000.json'
 
         trials = 1
