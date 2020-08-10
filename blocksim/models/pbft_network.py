@@ -48,8 +48,8 @@ class Network:
         probability of the node being chosen.
         """
         self._init_lists()
-        tx_left = -1
-        
+        empty_block = 0
+
         # (Ryan) Initialize max # of faulty nodes after lists have been initialized
         # Casting the divison result to an int is equivalent to applying floor function
         self.f = int(len(self._list_authority_nodes)/3)
@@ -64,9 +64,15 @@ class Network:
             print('If the signer is in-turn, wait for the exact time to arrive, ' +
                   'sign and broadcast immediately, at %d' % self.env.now)
 
-            # if not tx_left:
-            #     break
             tx_left = self._build_new_block(selected_node)
+
+            # If we have three consecutive empty block, stop.
+            if not tx_left:
+                empty_block += 1
+                if empty_block >= 3:
+                    break
+            else:
+                empty_block = 0
 
             self.env.data['end_simulation_time'] = datetime.utcfromtimestamp(self.env.now).strftime('%m-%d %H:%M:%S')
 
@@ -101,7 +107,7 @@ class Network:
         probability of the node being chosen.
         """
         self._init_lists()
-        tx_left = True
+        # tx_left = True
         empty_block = 0
 
         while True:
