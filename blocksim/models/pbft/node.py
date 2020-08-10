@@ -8,6 +8,8 @@ from blocksim.utils import time, get_random_values
 from blocksim.models.block import Block, BlockHeader
 from blocksim.models.pbft.message import Message
 from collections import defaultdict
+from pathlib import Path
+import pickle
 
 
 class PBFTNode(Node):
@@ -275,8 +277,7 @@ class PBFTNode(Node):
                 client_reply = self.network_message.client_reply(new_block)
                 self.env.process(self.broadcast_to_non_authorities(client_reply))
                 self.chain.add_block(new_block)
-                print(
-                    f'{self.address} at {time(self.env)}: Block assembled and added to the tip of the chain  {new_block.header}')
+                print(f'{self.address} at {time(self.env)}: Block assembled and added to the tip of the chain  {new_block.header}')
 
     # How non-authority nodes handle the receipt of a reply message from an authority
     def _receive_reply(self, envelope):
@@ -291,3 +292,23 @@ class PBFTNode(Node):
         self.log['reply'][timestamp].add(envelope.origin.address)
         if len(self.log['reply'][timestamp]) >= (2*self.network.f + 1):
             self.chain.add_block(new_block)
+
+    ##              ##
+    ## Chains       ##
+    ##              ##
+
+    def save_chains(self, day):
+        date = str(day)
+        file = Path.cwd() / 'blocksim' / 'chains' / (date + self.address)
+        with open(file, 'wb') as f:
+            pickle.dump(self.chain, f)
+
+    def restore_chains(self, day):
+        date = str(day)
+        file = Path.cwd() / 'blocksim' / 'chains' / (date + self.address)
+        with open(file, 'rb') as f:
+            yesterday_chains = pickle.load(f)
+            genesis = yesterday_chains.genesis
+            db = yesterday_chains.db
+            consensus = Consensus(self.env)
+            self.chain = Chain(self.env, self, consensus, genesis, db)

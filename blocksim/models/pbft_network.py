@@ -59,9 +59,6 @@ class Network:
                 self.env.delays['time_between_blocks_seconds'])[0], 2)
             yield self.env.timeout(time_between_blocks)
 
-            # Ryan: deleted commented block of code from original network.py
-            # Probably don't need it in every copy of this file!
-
             # Ryan: Implement new block selection process here (updated for PBFT 7/3!)
             selected_node = self._list_authority_nodes[self.view]
             print('If the signer is in-turn, wait for the exact time to arrive, ' +
