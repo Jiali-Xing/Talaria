@@ -35,9 +35,9 @@ def report_node_chain(world, nodes_list):
         }
 
 
-def run_model(json_file='tx_count_100.json'):
+def run_model(json_file='tx_count_100.json', day=150):
     now = int(time.time())  # Current time
-    duration = 60 # seconds
+    duration = 3600  # seconds
 
     world = SimulationWorld(
         duration,
@@ -46,7 +46,8 @@ def run_model(json_file='tx_count_100.json'):
         Path.cwd() / 'dlasc-input-parameters' / 'latency.json',
         Path.cwd() / 'dlasc-input-parameters' / 'throughput-received.json',
         Path.cwd() / 'dlasc-input-parameters' / 'throughput-sent.json',
-        Path.cwd() / 'dlasc-input-parameters' / 'delays.json'
+        Path.cwd() / 'dlasc-input-parameters' / 'delays.json',
+        day
         )
 
     # Create the network
@@ -88,26 +89,28 @@ if __name__ == '__main__':
         os.chdir(Path.parent)
         raise Exception('Wrong working dir. Should be blocksim-dlasc')
 
-    for i in range(1, 11):
+    # for i in range(1, 11):
+    for i in [10]:
         json_file = 'tx_count_' + str(i) + '000.json'
 
-        trials = 30
+        trials = 1
         time_record = []
         sim_time_record = []
 
         for i in range(trials):
+            day = 1
             start_time = time.time()
-            simulated_time = run_model(json_file)
+            simulated_time = run_model(json_file, day=day)
             sim_time_record.append(simulated_time)
             running_time = time.time() - start_time
             time_record.append(running_time)
 
-        path = Path.cwd() / 'blocksim' / 'output' / ('PBFT_simulated_time_' + json_file)
-        with open(path, 'w') as f:
-            json.dump(sim_time_record, f, indent=2)
-        path = Path.cwd() / 'blocksim' / 'output' / ('PBFT_running_time_' + json_file)
-        with open(path, 'w') as f:
-            json.dump(time_record, f, indent=2)
+        # path = Path.cwd() / 'blocksim' / 'output' / ('PBFT_simulated_time_' + json_file)
+        # with open(path, 'w') as f:
+        #     json.dump(sim_time_record, f, indent=2)
+        # path = Path.cwd() / 'blocksim' / 'output' / ('PBFT_running_time_' + json_file)
+        # with open(path, 'w') as f:
+        #     json.dump(time_record, f, indent=2)
 
     # ave_time = np.average(np.array(time_record))
     # sim_ave_time = np.average(np.array(sim_time_record))
