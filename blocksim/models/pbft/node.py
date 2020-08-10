@@ -54,8 +54,8 @@ class PBFTNode(Node):
             'commit': defaultdict(set),
             'committed': defaultdict(bool),
             'reply': defaultdict(set),
-            'viewchange': defaultdict(set),
-            'checkpoint': defaultdict(set)
+            'viewchange' : defaultdict(set),
+            'checkpoint': defaultdict(set),
         }
         
         #Ryan: We want to model node failures and view changes...
@@ -231,6 +231,7 @@ class PBFTNode(Node):
             # Jiali: store the block in the log for future commit
             block = Block(block_header, block_bodies[block_hash])
             self.log['block'][seqno] = block
+            print( 'TIME IS ' + time(self.env))
 
             if self.log['committed'][seqno] and self.chain.get_block(block_hash) is None:
                 new_block = self.log['block'][seqno]
@@ -285,8 +286,7 @@ class PBFTNode(Node):
                 client_reply = self.network_message.client_reply(new_block)
                 self.env.process(self.broadcast_to_non_authorities(client_reply))
                 self.chain.add_block(new_block)
-                print(
-                    f'{self.address} at {time(self.env)}: Block assembled and added to the tip of the chain  {new_block.header}')
+                print(f'{self.address} at {time(self.env)}: Block assembled and added to the tip of the chain  {new_block.header}')
 
     # How non-authority nodes handle the receipt of a reply message from an authority
     def _receive_reply(self, envelope):
@@ -318,6 +318,8 @@ class PBFTNode(Node):
 
     #IMPORTANT NOTE: View changes cannot be correctly implemented until checkpoints are first!
     def _send_viewchange(self):
-        viewchange_msg = self.network_message.view_change()
-        self.log['viewchange'].add(self.address)
+        checkpoint_msg = []
+        prepare_msg = []
+        viewchange_msg = self.network_message.view_change(checkpoint_msg, prepare_msg)
+        self.log['viewchange'][self.network.view].add(self.address)
         self.env.process(self.broadcast_to_authorities(viewchange_msg))
