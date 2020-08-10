@@ -42,7 +42,8 @@ class PBFTNode(Node):
             # Transaction Queue to store the transactions
             self.transaction_queue = TransactionQueue(
                 env, self, self.consensus)
-            self.env.process(self._check_timeout())
+            self.env.process(self._check_timeout()) #When node is initialized, begin periodically checking for timeout
+            self.env.process(self._checkpointing()) #When node is initialized, periodically check if a checkpoint should be taken
         self._handshaking = env.event()
         self.replica_id = replica_id
         # Jiali: a dict for logging msg/prepare/commit
@@ -60,11 +61,11 @@ class PBFTNode(Node):
         
         #Ryan: We want to model node failures and view changes...
         self.timedout = False #Indicate if a node has timed out
-        self.timeoutVal = 5 #Some numerical value for a timeout here
+        self.timeoutVal = 5 #Some numerical time value for a timeout here
         self.failure = False #Indicate if a node is down or will somehow act Byzantine
         self.prevLog = {} #Keep track of previous log state so node can detect changes to it
         self.currSeqno = 0
-        
+        self.lastCheckpoint = 0
 
     def build_new_block(self):
         """Builds a new candidate block and propagate it to the network
@@ -131,6 +132,8 @@ class PBFTNode(Node):
                 self._receive_prepare(envelope)
             if envelope.msg['id'] == 'commit':
                 self._receive_commit(envelope)
+            if envelope.msg['id'] == 'checkpoint':
+                self._receive_checkpoint_message(envelope)
 
     ##              ##
     ## Handshake    ##
@@ -297,7 +300,6 @@ class PBFTNode(Node):
             raise RuntimeError(f'Node {self.location} is an authority - they should not receive replies')
             
         new_block = envelope.msg.get('result')
-        # TODO timestamps are just 0 in all replies rn, so program won't be correctly checking for the block
         timestamp = envelope.msg.get('timestamp')    
         
         self.log['reply'][timestamp].add(envelope.origin.address)
@@ -315,21 +317,37 @@ class PBFTNode(Node):
                 self._send_viewchange()
                 
             self.prevLog = self.log #track log every timeout check
-            
-            if not self.currSeqno % self.network.checkpoint_size: #Periodically see if we have reached a checkpoint handler
-                self._handle_checkpoint()
                 
             yield self.env.timeout(self.timeoutVal)
             
-    def _handle_checkpoint(self):
-        pass
+    def _checkpointing(self):
+        while True:
+            if (((self.currSeqno) % (self.network.checkpoint_size)) == 0): # and (self.currSeqno - self.lastCheckpoint == self.network.checkpoint_size): #Periodically see if we have reached a checkpoint handler
+                self._send_checkpoint_message(self.currSeqno)
+            yield self.env.timeout(self.network.checkpoint_delay)
     
-    def _send_checkpoint_message(self):
-        pass
-    
-    def _receive_checkpoint_message(self):
-        pass
+    def _send_checkpoint_message(self, seqno):
+        checkpoint_msg = self.network_message.checkpoint(seqno)
+        self.env.process(self.broadcast_to_authorities(checkpoint_msg))
+        self.log['checkpoint'][seqno].add(self.address)
+        
+    def _receive_checkpoint_message(self, envelope):
+        seqno = envelope.msg.get('seqno')
+        self.log['checkpoint'][seqno].add(envelope.origin.address)
 
+        if self.log['checkpoint'][seqno] and len(self.log['checkpoint'][seqno]) >= 2*self.network.f:
+            #Clear out log entries covered by a checkpoint state
+            if self.log['committed'][self.lastCheckpoint]:
+                for oldSeqno in range(self.lastCheckpoint, seqno):
+                    #TODO: Iron out what to do with reply messages since they use timestamp instead of seqno
+                    del self.log['reply'][self.log['block'][oldSeqno].header.timestamp]
+                    del self.log['block'][oldSeqno]
+                    del self.log['prepare'][oldSeqno]
+                    del self.log['prepared'][oldSeqno]
+                    del self.log['commit'][oldSeqno]
+                    del self.log['committed'][oldSeqno]
+                self.lastCheckpoint = seqno
+                        
     #IMPORTANT NOTE: View changes cannot be correctly implemented until checkpoints are first!
     def _send_viewchange(self):
         checkpoint_msg = []
