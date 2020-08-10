@@ -63,6 +63,7 @@ class PBFTNode(Node):
         self.timeoutVal = 5 #Some numerical value for a timeout here
         self.failure = False #Indicate if a node is down or will somehow act Byzantine
         self.prevLog = {} #Keep track of previous log state so node can detect changes to it
+        self.currSeqno = 0
         
 
     def build_new_block(self):
@@ -214,6 +215,7 @@ class PBFTNode(Node):
             # Jiali: Add block to its own log first.
             seqno = block.header.number
             self.log['block'][seqno] = block
+            self.currSeqno = seqno
 
         new_blocks_msg = self.network_message.pre_prepare(seqno, new_blocks_hashes, block_bodies)
         self.env.process(self.broadcast(new_blocks_msg))
@@ -313,8 +315,20 @@ class PBFTNode(Node):
                 self._send_viewchange()
                 
             self.prevLog = self.log #track log every timeout check
+            
+            if not self.currSeqno % self.network.checkpoint_size: #Periodically see if we have reached a checkpoint handler
+                self._handle_checkpoint()
                 
             yield self.env.timeout(self.timeoutVal)
+            
+    def _handle_checkpoint(self):
+        pass
+    
+    def _send_checkpoint_message(self):
+        pass
+    
+    def _receive_checkpoint_message(self):
+        pass
 
     #IMPORTANT NOTE: View changes cannot be correctly implemented until checkpoints are first!
     def _send_viewchange(self):
