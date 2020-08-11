@@ -17,7 +17,8 @@ class Network:
         self.view = 0  # Ryan: replace authority_index with view, for terminology, and because we are no longer
         # directly iterating through the list of authorities, only when the current leader goes down
         self.f = 0  # Just so you can see that max faulty nodes is a parameter of the network, it's initialized below
-        self.checkpoint_size = 100 #How many blocks before you take a checkpoint, assuming seqno is per block
+        self.checkpoint_size = 1 #How many blocks before you take a checkpoint, assuming seqno is per block
+        self.checkpoint_delay = 0.1
 
     def get_node(self, address):
         return self._nodes.get(address)
