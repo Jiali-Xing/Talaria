@@ -313,3 +313,5 @@ class PBFTNode(Node):
             genesis, db = pickle.load(f)
             consensus = Consensus(self.env)
             self.chain = Chain(self.env, self, consensus, genesis, db)
+        # Jiali: remove dumped file after restore to collect garbage
+        file.unlink()
