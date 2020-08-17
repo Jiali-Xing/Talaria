@@ -1,3 +1,4 @@
+from collections import namedtuple #to support envelope fcnality for viewchanges
 from blocksim.models.permissioned_node import Node
 from blocksim.models.pbft_network import Network
 from blocksim.models.chain import Chain
@@ -11,6 +12,7 @@ from collections import defaultdict
 from pathlib import Path
 import pickle
 
+Envelope = namedtuple('Envelope', 'msg, timestamp, destination, origin')
 
 class PBFTNode(Node):
 
@@ -49,7 +51,6 @@ class PBFTNode(Node):
         self._handshaking = env.event()
         self.replica_id = replica_id
         # Jiali: a dict for logging msg/prepare/commit
-        # TODO: Garbage Collection
         self.log = {
             'block': defaultdict(bool),
             'prepare': defaultdict(set),
@@ -57,8 +58,9 @@ class PBFTNode(Node):
             'commit': defaultdict(set),
             'committed': defaultdict(bool),
             'reply': defaultdict(set),
-            'viewchange' : defaultdict(set),
+            'viewchange' : defaultdict(list), #TODO, correct for multiple occurrences 
             'checkpoint': defaultdict(set),
+            'newview' : defaultdict(set)
         }
 
         #Ryan: We want to model node failures and view changes...
@@ -136,6 +138,12 @@ class PBFTNode(Node):
                 self._receive_commit(envelope)
             if envelope.msg['id'] == 'checkpoint':
                 self._receive_checkpoint_message(envelope)
+            #Only the prospective next view primary should care about a viewchange
+            #This is checked within "receive_viewchange"
+            if envelope.msg['id'] == 'viewchange':
+                self._receive_viewchange(envelope)
+            if envelope.msg['id'] == 'newview':
+                self._receive_newview(envelope)
 
     ##              ##
     ## Handshake    ##
@@ -222,11 +230,15 @@ class PBFTNode(Node):
             self.log['block'][seqno] = block
             self.currSeqno = seqno
 
-        new_blocks_msg = self.network_message.pre_prepare(seqno, new_blocks_hashes, block_bodies)
+        new_blocks_msg = self.network_message.pre_prepare(seqno, new_blocks_hashes, block_bodies, False)
         self.env.process(self.broadcast(new_blocks_msg))
 
     def _receive_pre_prepare(self, envelope):
         seqno = envelope.msg.get('seqno')
+        
+        if (envelope.msg['new_blocks'] == None) and (envelope.msg['block_bodies'] == None):
+            self.log['block'][seqno] = None
+            return #Do nothing because it was a no-op preprepare from a view change
         new_blocks = envelope.msg['new_blocks']
         block_bodies = envelope.msg['block_bodies']
 
@@ -352,11 +364,83 @@ class PBFTNode(Node):
 
     #IMPORTANT NOTE: View changes cannot be correctly implemented until checkpoints are first!
     def _send_viewchange(self):
-        checkpoint_msg = []
-        prepare_msg = []
-        viewchange_msg = self.network_message.view_change(checkpoint_msg, prepare_msg)
-        self.log['viewchange'][self.network.view].add(self.address)
+        checkpoint_msg = self.log['checkpoint'][self.lastCheckpoint]
+        prepare_msg = self._collect_viewchange_prepareset()
+        viewchange_msg = self.network_message.view_change(self.lastCheckpoint , checkpoint_msg, prepare_msg)
+        self.log['viewchange'][self.network.view].append((self.address, viewchange_msg))
         self.env.process(self.broadcast_to_authorities(viewchange_msg))
+        
+    def _collect_viewchange_prepareset(self):
+        prepareset = []
+        for seqno in range(self.lastCheckpoint, self.currSeqno):
+            if self.log['prepared'][seqno]:
+                prepareset.append(self.log['block'][seqno])
+                #for node in range(1, (2*self.network.f) + 1):
+                #    prepareset.append(self.log['prepare'][seqno][node])
+                #TODO: May want to consider converting the log to use lists instead of sets and just deal with checking for duplicates.
+                #Unless there is a no-duplicate list?
+                prepareset.append(self.log['block'][seqno]) #Could be more than 2f+1, but for now...
+        return prepareset
+        
+    def _receive_viewchange(self, envelope):
+        if self._is_next_primary():
+            newView = envelope.msg.get('nextview')
+            self.log['viewchange'][newView].append((envelope.origin.address, envelope.msg))
+            if len(self.log['viewchange'][newView]) >= (2*self.network.f + 1):
+                self._send_newview(newView)
+        else:
+            pass
+    
+    def _send_newview(self, newView):
+        viewchange_msg = self.log['viewchange'][self.network.view + 1]
+        preprepare_msg = self._collect_newview_preprepareset(viewchange_msg)
+        newview_msg = self.network_message.new_view(viewchange_msg, preprepare_msg)
+        self.log['newview'][newView].add(self.address)
+        self.env.process(self.broadcast_to_authorities(newview_msg))
+        self.network.view += 1
+    
+    def _collect_newview_preprepareset(self, viewchange_msg):
+        preprepareset = []
+        max_checkpt = 0
+        existing_seqnos = []
+        max_s = 0 #See PBFT paper for description of 'max_s'
+        for (origin_address, msg) in viewchange_msg:
+            ckpt = msg.get('checkpoint_seqno')
+            if ckpt > max_checkpt:
+                max_checkpt = ckpt
+            prepareset = msg.get('prepare_messages')
+            for prepare_msg in prepareset:
+                prepare_seqno = prepare_msg.get('seqno')
+                existing_seqnos.append(prepare_seqno)
+                if prepare_seqno > max_s:
+                    max_s = prepare_seqno
+            
+        min_s = max_checkpt #See PBFT paper for description of 'min_s'
+        
+        #New preprepare messages created for uncommitted messages from old view
+        new_prepreparemsg = None
+        for seqno in range(min_s, max_s + 1):
+            if seqno in existing_seqnos:
+                new_blocks = self.log['prepare'][seqno].get('new_blocks')
+                block_bodies = self.log['prepare'][seqno].get('block_bodies')
+                new_prepreparemsg = self.network_message.pre_prepare(seqno, new_blocks, block_bodies, True)
+                
+            else:
+                new_prepreparemsg = self.network_message.pre_prepare(seqno, None, None, True)
+                
+            preprepareset.append(new_prepreparemsg)
+            envelope = Envelope(new_prepreparemsg, time(self.env), None, None)
+            self._receive_pre_prepare(envelope) #Leverage already existing message to log 'O' for primary
+        return preprepareset
+    
+    def _receive_newview(self, envelope):
+        pass
+
+    def _is_primary(self):
+        return self.replica_id == (self.network.view % len(self.network._list_authority_nodes))
+
+    def _is_next_primary(self):
+        return self.replica_id == ((self.network.view + 1) % len(self.network._list_authority_nodes))
 
     ##              ##
     ## Chains       ##

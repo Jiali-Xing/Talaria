@@ -38,30 +38,42 @@ class Message:
         }
     
     # Ryan: Reformat messages to hold info
-    def pre_prepare(self, seqno, new_blocks: dict, block_bodies: dict):
+    def pre_prepare(self, seqno, new_blocks: dict, block_bodies: dict, new_view):
         # Jiali: pre-prepare should be similar to newblock, so I migrate newblock to here.
         """Advertises one or more new blocks which have appeared on the network"""
         # Jiali: we can use the number of last block in one message (assume multiple blocks in one pre-prepare is
         # possible) as seqno!
 
-        num_new_block_hashes = len(new_blocks)
-        new_blocks_size = num_new_block_hashes * \
+        if new_view:
+            
+            return {
+                'id': 'pre-prepare',
+                'view': self.origin_node.network.view + 1,
+                'seqno': seqno,
+                'digest': 0,
+                'new_blocks': new_blocks,
+                'block_bodies': block_bodies,
+                'size': kB_to_MB(self._message_size['tx'])
+                }
+        else:
+            
+            num_new_block_hashes = len(new_blocks)
+            new_blocks_size = num_new_block_hashes * \
                           self._message_size['hash_size']
 
-        txsCount = 0
-        for block_hash, block_txs in block_bodies.items():
-            txsCount += len(block_txs)
-        message_size = (txsCount * self._message_size['tx']) + self._message_size['block_bodies']
-
-        return {
-            'id': 'pre-prepare',
-            'view': self.origin_node.network.view,
-            'seqno': seqno,
-            'digest': 0,
-            'new_blocks': new_blocks,
-            'block_bodies': block_bodies,
-            'size': kB_to_MB(message_size+new_blocks_size)
-        }
+            txsCount = 0
+            for block_hash, block_txs in block_bodies.items():
+                txsCount += len(block_txs)
+            message_size = (txsCount * self._message_size['tx']) + self._message_size['block_bodies']
+            return {
+                'id': 'pre-prepare',
+                'view': self.origin_node.network.view,
+                'seqno': seqno,
+                'digest': 0,
+                'new_blocks': new_blocks,
+                'block_bodies': block_bodies,
+                'size': kB_to_MB(message_size+new_blocks_size)
+                }
     
     def prepare(self, seqno):
         # TODO: change digest to header.hash
@@ -105,14 +117,16 @@ class Message:
             'size' : kB_to_MB(self._message_size['checkpoint'])
         }
     
-    def view_change(self, checkpoint_msg, prepare_msg):
+    def view_change(self, ckpt_seqno, checkpoint_msg, prepare_msg):
         return {
            'id' : "viewchange",
            'nextview' : self.origin_node.network.view + 1,
+           'checkpoint_seqno' : ckpt_seqno,
            'checkpoint_messages' : checkpoint_msg,
            'prepare_messages' : prepare_msg,
            'replica_id' : self.origin_node.replica_id,
-           'size' : kB_to_MB(self._message_size['viewchange_base']) #TODO Add size of contained messages
+           'size' : kB_to_MB(self._message_size['viewchange_base']) + (len(checkpoint_msg) * kB_to_MB(self._message_size['checkpoint'])) + \
+            (len(prepare_msg) * kB_to_MB(self._message_size['prepare']))
             }
     
     def new_view(self, viewchange_msg, preprepare_msg):
@@ -122,5 +136,6 @@ class Message:
             'newview' : self.origin_node.network.view,
             'viewchange_messages' : viewchange_msg,
             'preprepare_messages' : preprepare_msg,
-            'size' : kB_to_MB(self._message_size['newview_base']) #TODO Add size of contained messages
+            'size' : kB_to_MB(self._message_size['newview_base']) + (len(viewchange_msg) * kB_to_MB(self._message_size['viewchange_base'])) + \
+            (len(preprepare_msg) * kB_to_MB(self._message_size['tx']))
             }
