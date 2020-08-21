@@ -384,12 +384,17 @@ class PBFTNode(Node):
         
     def _receive_viewchange(self, envelope):
         newView = envelope.msg.get('nextview')
-        self.log['viewchange'][newView].append((envelope.origin.address, envelope.msg))
+        for (address, msg) in self.log['viewchange'][newView]: #Deal with list duplicates for viewchanges (need actual contents of viewchange messages, so can't use set)
+            if address == envelope.origin.address:
+                self.log['viewchange'][newView].remove((address,msg))
+                self.log['viewchange'][newView].append((envelope.origin.address, envelope.msg))
+                break
+        else:
+            self.log['viewchange'][newView].append((envelope.origin.address, envelope.msg))
+            
         if self._is_next_primary():
             if len(self.log['viewchange'][newView]) >= (2*self.network.f + 1):
                 self._send_newview(newView)
-        else:
-            pass
     
     def _send_newview(self, newView):
         viewchange_msg = self.log['viewchange'][self.network.view + 1]
