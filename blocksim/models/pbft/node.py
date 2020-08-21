@@ -41,7 +41,7 @@ class PBFTNode(Node):
         self.temp_headers = {}
         self.network_message = Message(self)
         if is_authority:
-            self.current_view = 0
+            self.current_view = self.network.view
             self.current_sequence = 0
             # Transaction Queue to store the transactions
             self.transaction_queue = TransactionQueue(
@@ -341,7 +341,7 @@ class PBFTNode(Node):
             yield self.env.timeout(self.network.checkpoint_delay)
 
     def _send_checkpoint_message(self, seqno):
-        checkpoint_msg = self.network_message.checkpoint(seqno)
+        checkpoint_msg = self.network_message.checkpoint(seqno, self.replica_id)
         self.env.process(self.broadcast_to_authorities(checkpoint_msg))
         self.log['checkpoint'][seqno].add(self.address)
 
@@ -383,9 +383,9 @@ class PBFTNode(Node):
         return prepareset
         
     def _receive_viewchange(self, envelope):
+        newView = envelope.msg.get('nextview')
+        self.log['viewchange'][newView].append((envelope.origin.address, envelope.msg))
         if self._is_next_primary():
-            newView = envelope.msg.get('nextview')
-            self.log['viewchange'][newView].append((envelope.origin.address, envelope.msg))
             if len(self.log['viewchange'][newView]) >= (2*self.network.f + 1):
                 self._send_newview(newView)
         else:
@@ -417,6 +417,14 @@ class PBFTNode(Node):
             
         min_s = max_checkpt #See PBFT paper for description of 'min_s'
         
+        #Check min_s relative to latest node checkpoint
+        #If they don't match, forge a stability proof!
+        if min_s > self.lastCheckpoint:
+            for i in range(2 * self.network.f + 1):
+                new_checkpoint = self.network_message.checkpoint(min_s, i)
+                envelope = Envelope(new_checkpoint, time(self.env), None, None)
+                self._receive_checkpoint_message(envelope)
+        
         #New preprepare messages created for uncommitted messages from old view
         new_prepreparemsg = None
         for seqno in range(min_s, max_s + 1):
@@ -434,8 +442,16 @@ class PBFTNode(Node):
         return preprepareset
     
     def _receive_newview(self, envelope):
-        pass
-
+        if self._is_primary():
+            return
+        
+        newview = envelope.msg.get('newview')
+        if len(self.log['viewchange'][newview]) >= (2 * self.network.f + 1):
+            for o_msg in envelope.msg.get('preprepare_messages'):
+                pass
+            self.current_view += 1
+            
+            
     def _is_primary(self):
         return self.replica_id == (self.network.view % len(self.network._list_authority_nodes))
 
