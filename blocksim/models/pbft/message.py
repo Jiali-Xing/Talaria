@@ -108,12 +108,12 @@ class Message:
             'size': kB_to_MB(self._message_size['reply']) #TODO: Will need to add block size
         }
 
-    def checkpoint(self, seqno):
+    def checkpoint(self, seqno, replica_id):
         return {
             'id': 'checkpoint',
             'seqno': seqno,
             'digest' : 0,
-            'replica_id' : self.origin_node.replica_id,
+            'replica_id' : replica_id,
             'size' : kB_to_MB(self._message_size['checkpoint'])
         }
     
