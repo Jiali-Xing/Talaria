@@ -1,4 +1,4 @@
-from collections import namedtuple #to support envelope fcnality for viewchanges
+from collections import namedtuple  # to support envelope finality for viewchanges
 from blocksim.models.permissioned_node import Node
 from blocksim.models.pbft_network import Network
 from blocksim.models.chain import Chain
@@ -336,7 +336,7 @@ class PBFTNode(Node):
 
     def _checkpointing(self):
         while True:
-            if (((self.currSeqno) % (self.network.checkpoint_size)) == 0): # and (self.currSeqno - self.lastCheckpoint == self.network.checkpoint_size): #Periodically see if we have reached a checkpoint handler
+            if (self.currSeqno % self.network.checkpoint_size) == 0: # and (self.currSeqno - self.lastCheckpoint == self.network.checkpoint_size): #Periodically see if we have reached a checkpoint handler
                 self._send_checkpoint_message(self.currSeqno)
             yield self.env.timeout(self.network.checkpoint_delay)
 
