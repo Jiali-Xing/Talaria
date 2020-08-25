@@ -117,7 +117,7 @@ class Node:
 
     def listening_node(self, connection):
         while True:
-            # Get the messages from  connection
+            # Get the messages from connection
             envelope = yield connection.get()
             origin_loc = envelope.origin.location
             dest_loc = envelope.destination.location
@@ -138,8 +138,8 @@ class Node:
                         txs.update({f'{tx.hash[:8]}': propagation_time})
                 self.env.data['tx_propagation'][f'{envelope.origin.address}_{envelope.destination.address}'].update(
                     txs)
-            # Monitor the block propagation on Ethereum
-            if envelope.msg['id'] == 'block_bodies':
+            # Monitor the block propagation on Ethereum and PBFT
+            if envelope.msg['id'] in ('block_bodies', 'pre-prepare'):
                 block_propagation = self.env.data['block_propagation'][
                     f'{envelope.origin.address}_{envelope.destination.address}']
                 blocks = {}
@@ -204,7 +204,7 @@ class Node:
                 self.env.data['tx_propagation'][f'{origin_node.address}_{destination_node.address}'].update(
                     txs)
             # Monitor the block propagation on Ethereum
-            if msg['id'] == 'new_blocks':
+            if msg['id'] in ('new_blocks', 'pre-prepare'):
                 blocks = {}
                 for block_hash in msg['new_blocks']:
                     blocks.update({f'{block_hash[:8]}': self.env.now})
