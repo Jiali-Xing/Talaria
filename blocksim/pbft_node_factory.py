@@ -7,6 +7,7 @@ from blocksim.models.bitcoin.node import BTCNode
 from blocksim.models.ethereum.dlasc_node import ETHNode
 from blocksim.models.poa.node import POANode
 from blocksim.models.pbft.node import PBFTNode
+from blocksim.models.pbft_network import MaliciousModel
 
 
 class NodeFactory:
@@ -96,7 +97,8 @@ class NodeFactory:
                               region_id,
                               node_address,
                               replica_id,
-                              True)
+                              True,
+                              MaliciousModel.NOT_MALICIOUS)
                 nodes_list.append(new)
             else:
                 # Creat the non-authority nodes if node is oversea

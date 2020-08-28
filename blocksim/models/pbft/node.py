@@ -1,6 +1,6 @@
 from collections import namedtuple  # to support envelope finality for viewchanges
 from blocksim.models.permissioned_node import Node
-from blocksim.models.pbft_network import Network
+from blocksim.models.pbft_network import Network, MaliciousModel
 from blocksim.models.chain import Chain
 from blocksim.models.consensus import Consensus
 from blocksim.models.db import BaseDB
@@ -23,6 +23,7 @@ class PBFTNode(Node):
                  address: str,
                  replica_id, 
                  is_authority=False,
+                 is_malicious=MaliciousModel.NOT_MALICIOUS
                  ):
         # Jiali: This function is borrowed from ethereum/node.py, without any change actually.
         # Create the PoA genesis block and init the chain
@@ -160,12 +161,12 @@ class PBFTNode(Node):
         This message should be sent after the initial handshake and prior to any ethereum related messages."""
         status_msg = self.network_message.status()
         print(
-            f'{self.address} at {time(self.env)}: Status message sent to {destination_address}')
+            f'{self.address} at {time(self.env)}: Status message sent to {destination_address}')
         self.env.process(self.send(destination_address, status_msg))
 
     def _receive_status(self, envelope):
         print(
-            f'{self.address} at {time(self.env)}: Receive status from {envelope.origin.address}')
+            f'{self.address} at {time(self.env)}: Receive status from {envelope.origin.address}')
         node = self.active_sessions.get(envelope.origin.address)
         node['status'] = envelope.msg
         self.active_sessions[envelope.origin.address] = node
@@ -193,7 +194,7 @@ class PBFTNode(Node):
         # Only send if it has transactions
         if transactions:
             print(
-                f'{self.address} at {time(self.env)}: {len(transactions)} transactions ready to be sent')
+                f'{self.address} at {time(self.env)}: {len(transactions)} transactions ready to be sent')
             transactions_msg = self.network_message.transactions(transactions)
             self.env.process(self.broadcast(transactions_msg))
 
@@ -264,7 +265,7 @@ class PBFTNode(Node):
         #  where the seqno should be attached to block not per node! (so can not be self.seqno?)
         seqno = envelop.msg['seqno']
         print(
-            f'{self.address} at {time(self.env)}: Prepare prepared to multicast.')
+            f'{self.address} at {time(self.env)}: Prepare prepared to multicast.')
         prepare_msg = self.network_message.prepare(seqno)
         self.log['prepare'][seqno].add(self.address)
         self.env.process(self.broadcast_to_authorities(prepare_msg))
