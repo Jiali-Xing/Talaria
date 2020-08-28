@@ -110,6 +110,9 @@ class Chain:
                 f'{self.node.address} at {time(self.env)}: Adding block #{block.header.number} ({block.header.hash[:8]}) to the head', )
             self.db.put(f'block:{block.header.number}', block.header.hash)
             self._head_hash = block.header.hash
+        # Or is the block being added to a chain repeatedly?
+        elif block.header.hash in self.db:
+            f'{self.node.address} at {time(self.env)}: Found duplicated block #{block.header.number} ({block.header.hash[:8]}).'
         # Or is the block being added to a chain that is not currently the head?
         elif block.header.prevhash in self.db:
             print(

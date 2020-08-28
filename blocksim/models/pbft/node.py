@@ -90,7 +90,7 @@ class PBFTNode(Node):
                     f'{self.address} at {time(self.env)}: No more transactions queued.')
                 # Jiali: stop simulation when tx are done, in order to know whether/when it happens
                 # raise Exception('TX all processed')
-                tx_left = False
+                tx_left = False if i == 0 else True
                 break
             pending_tx = self.transaction_queue.get()
             pending_txs.append(pending_tx)
@@ -483,3 +483,5 @@ class PBFTNode(Node):
             genesis, db = pickle.load(f)
             consensus = Consensus(self.env)
             self.chain = Chain(self.env, self, consensus, genesis, db)
+        # Jiali: remove dumped file after restore to collect garbage
+        file.unlink()
