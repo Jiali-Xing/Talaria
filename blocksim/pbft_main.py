@@ -94,13 +94,14 @@ def run_model(json_file='tx_count_100.json', day=1):
 if __name__ == '__main__':
     main_folder = Path.cwd() / 'blocksim'
     if not main_folder.exists():
+        print(Path.cwd())
         os.chdir(Path.parent)
         raise Exception('Wrong working dir. Should be blocksim-dlasc')
 
     # for i in range(1, 11):
     for i in [10]:
         #json_file = 'tx_count_' + str(i) + '000.json'
-        json_file = 'tx_count_Standard.json'
+        json_file = 'tx_count_1.json'
         
         trials = 1
         time_record = []
