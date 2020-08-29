@@ -1,6 +1,6 @@
 from collections import namedtuple  # to support envelope finality for viewchanges
 from blocksim.models.permissioned_node import Node
-from blocksim.models.pbft_network import Network
+from blocksim.models.pbft_network import Network, MaliciousModel
 from blocksim.models.chain import Chain
 from blocksim.models.consensus import Consensus
 from blocksim.models.db import BaseDB
@@ -10,6 +10,7 @@ from blocksim.models.block import Block, BlockHeader
 from blocksim.models.pbft.message import Message
 from collections import defaultdict
 from pathlib import Path
+from scipy import random
 import pickle
 
 Envelope = namedtuple('Envelope', 'msg, timestamp, destination, origin')
@@ -23,6 +24,7 @@ class PBFTNode(Node):
                  address: str,
                  replica_id, 
                  is_authority=False,
+                 is_malicious=MaliciousModel.NOT_MALICIOUS
                  ):
         # Jiali: This function is borrowed from ethereum/node.py, without any change actually.
         # Create the PoA genesis block and init the chain
@@ -48,6 +50,11 @@ class PBFTNode(Node):
                 env, self, self.consensus)
             self.env.process(self._check_timeout()) #When node is initialized, begin periodically checking for timeout
             self.env.process(self._checkpointing()) #When node is initialized, periodically check if a checkpoint should be taken
+            
+        self.is_malicious = is_malicious
+        if self.is_malicious == MaliciousModel.PASSIVE:
+            self.drop_probability = 0.5
+        
         self._handshaking = env.event()
         self.replica_id = replica_id
         # Jiali: a dict for logging msg/prepare/commit
@@ -122,6 +129,12 @@ class PBFTNode(Node):
     def _read_envelope(self, envelope):
         # Jiali: This function is borrowed from ethereum/node.py, with minor changes.
         super()._read_envelope(envelope)
+        
+        if self.is_malicious == MaliciousModel.PASSIVE:
+            drop_message = random.choice([True, False], p=[self.drop_probability, 1 - self.drop_probability])
+            if drop_message:
+                return
+        
         if envelope.msg['id'] == 'status':
             self._receive_status(envelope)
         if envelope.msg['id'] == 'transactions':
@@ -160,12 +173,12 @@ class PBFTNode(Node):
         This message should be sent after the initial handshake and prior to any ethereum related messages."""
         status_msg = self.network_message.status()
         print(
-            f'{self.address} at {time(self.env)}: Status message sent to {destination_address}')
+            f'{self.address} at {time(self.env)}: Status message sent to {destination_address}')
         self.env.process(self.send(destination_address, status_msg))
 
     def _receive_status(self, envelope):
         print(
-            f'{self.address} at {time(self.env)}: Receive status from {envelope.origin.address}')
+            f'{self.address} at {time(self.env)}: Receive status from {envelope.origin.address}')
         node = self.active_sessions.get(envelope.origin.address)
         node['status'] = envelope.msg
         self.active_sessions[envelope.origin.address] = node
@@ -193,7 +206,7 @@ class PBFTNode(Node):
         # Only send if it has transactions
         if transactions:
             print(
-                f'{self.address} at {time(self.env)}: {len(transactions)} transactions ready to be sent')
+                f'{self.address} at {time(self.env)}: {len(transactions)} transactions ready to be sent')
             transactions_msg = self.network_message.transactions(transactions)
             self.env.process(self.broadcast(transactions_msg))
 
@@ -264,7 +277,7 @@ class PBFTNode(Node):
         #  where the seqno should be attached to block not per node! (so can not be self.seqno?)
         seqno = envelop.msg['seqno']
         print(
-            f'{self.address} at {time(self.env)}: Prepare prepared to multicast.')
+            f'{self.address} at {time(self.env)}: Prepare prepared to multicast.')
         prepare_msg = self.network_message.prepare(seqno)
         self.log['prepare'][seqno].add(self.address)
         self.env.process(self.broadcast_to_authorities(prepare_msg))
