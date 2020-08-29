@@ -9,7 +9,10 @@ class Message:
         self.origin_node = origin_node
         _env = origin_node.env
         self._message_size = _env.config['pbft']['message_size_kB']
-        
+
+        # Digest is 0 meaning correct/valid, 1 is malicious and modified/invalid message.
+        self.digest = 0 if self.origin_node.is_malicious == MaliciousModel.ACTIVE else 1
+
     def status(self):
         """ Inform a peer of its current PoA state.
         This message should be sent `after` the initial handshake and `prior` to any PoA related messages.
@@ -43,18 +46,14 @@ class Message:
         """Advertises one or more new blocks which have appeared on the network"""
         # Jiali: we can use the number of last block in one message (assume multiple blocks in one pre-prepare is
         # possible) as seqno!
-        
-        digest = 0
-        if self.origin_node.is_malicious == MaliciousModel.ACTIVE:
-            digest = 1
-        
+
         if new_view:
             
             return {
                 'id': 'pre-prepare',
                 'view': self.origin_node.network.view + 1,
                 'seqno': seqno,
-                'digest': digest,
+                'digest': self.digest,
                 'new_blocks': new_blocks,
                 'block_bodies': block_bodies,
                 'size': kB_to_MB(self._message_size['tx'])
@@ -73,37 +72,32 @@ class Message:
                 'id': 'pre-prepare',
                 'view': self.origin_node.network.view,
                 'seqno': seqno,
-                'digest': digest,
+                'digest': self.digest,
                 'new_blocks': new_blocks,
                 'block_bodies': block_bodies,
                 'size': kB_to_MB(message_size+new_blocks_size)
                 }
     
     def prepare(self, seqno):
-        digest = 0
-        if self.origin_node.is_malicious == MaliciousModel.ACTIVE:
-            digest = 1
+        
             
         return {
             'id': 'prepare',
             'view': self.origin_node.network.view,
             'seqno': seqno,
-            'digest': digest,
+            'digest': self.digest,
             'replica_id': self.origin_node.replica_id,
             'size': kB_to_MB(self._message_size['prepare'])
         }
     
     # Originally copied from "block_bodies()" in the ETH version of message.py
     def commit(self, seqno):
-        digest = 0
-        if self.origin_node.is_malicious == MaliciousModel.ACTIVE:
-            digest = 1
-            
+
         return {
             'id': 'commit',
             'view': self.origin_node.network.view,
             'seqno': seqno,
-            'digest': digest,
+            'digest': self.digest,
             'replica_id': self.origin_node.replica_id,
             'size': kB_to_MB(self._message_size['commit'])
         }
@@ -120,16 +114,13 @@ class Message:
         }
 
     def checkpoint(self, seqno, replica_id):
-        digest = 0
-        if self.origin_node.is_malicious == MaliciousModel.ACTIVE:
-            digest = 1
-            
+
         return {
             'id': 'checkpoint',
             'seqno': seqno,
-            'digest' : 0,
-            'replica_id' : replica_id,
-            'size' : kB_to_MB(self._message_size['checkpoint'])
+            'digest': self.digest,
+            'replica_id': replica_id,
+            'size': kB_to_MB(self._message_size['checkpoint'])
         }
     
     def view_change(self, ckpt_seqno, checkpoint_msg, prepare_msg):
