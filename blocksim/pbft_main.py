@@ -98,16 +98,16 @@ if __name__ == '__main__':
         raise Exception('Wrong working dir. Should be blocksim-dlasc')
 
     # for i in range(1, 11):
-    for i in [10]:
-        #json_file = 'tx_count_' + str(i) + '000.json'
-        json_file = 'tx_count_Standard.json'
+    for i in [5]:
+        json_file = 'tx_count_' + str(i) + '000.json'
+        # json_file = 'tx_count_Standard.json'
         
         trials = 1
         time_record = []
         sim_time_record = []
 
         for i in range(trials):
-            day = 1
+            day = 3
             start_time = time.time()
             simulated_time = run_model(json_file, day=day)
             sim_time_record.append(simulated_time)
