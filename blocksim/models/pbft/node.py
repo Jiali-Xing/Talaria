@@ -10,6 +10,7 @@ from blocksim.models.block import Block, BlockHeader
 from blocksim.models.pbft.message import Message
 from collections import defaultdict
 from pathlib import Path
+from scipy import random
 import pickle
 
 Envelope = namedtuple('Envelope', 'msg, timestamp, destination, origin')
@@ -49,7 +50,11 @@ class PBFTNode(Node):
                 env, self, self.consensus)
             self.env.process(self._check_timeout()) #When node is initialized, begin periodically checking for timeout
             self.env.process(self._checkpointing()) #When node is initialized, periodically check if a checkpoint should be taken
+            
         self.is_malicious = is_malicious
+        if self.is_malicious == MaliciousModel.PASSIVE:
+            self.drop_probability = 0.5
+        
         self._handshaking = env.event()
         self.replica_id = replica_id
         # Jiali: a dict for logging msg/prepare/commit
@@ -124,6 +129,12 @@ class PBFTNode(Node):
     def _read_envelope(self, envelope):
         # Jiali: This function is borrowed from ethereum/node.py, with minor changes.
         super()._read_envelope(envelope)
+        
+        if self.is_malicious == MaliciousModel.PASSIVE:
+            drop_message = random.choice([True, False], p=[self.drop_probability, 1 - self.drop_probability])
+            if drop_message:
+                return
+        
         if envelope.msg['id'] == 'status':
             self._receive_status(envelope)
         if envelope.msg['id'] == 'transactions':
