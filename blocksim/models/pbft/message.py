@@ -1,5 +1,5 @@
 from blocksim.utils import kB_to_MB
-
+from blocksim.models.pbft_network import MaliciousModel
 
 class Message:
     # Jiali: Copied from Ethereum
@@ -43,14 +43,18 @@ class Message:
         """Advertises one or more new blocks which have appeared on the network"""
         # Jiali: we can use the number of last block in one message (assume multiple blocks in one pre-prepare is
         # possible) as seqno!
-
+        
+        digest = 0
+        if self.origin_node.is_malicious == MaliciousModel.ACTIVE:
+            digest = 1
+        
         if new_view:
             
             return {
                 'id': 'pre-prepare',
                 'view': self.origin_node.network.view + 1,
                 'seqno': seqno,
-                'digest': 0,
+                'digest': digest,
                 'new_blocks': new_blocks,
                 'block_bodies': block_bodies,
                 'size': kB_to_MB(self._message_size['tx'])
@@ -69,30 +73,37 @@ class Message:
                 'id': 'pre-prepare',
                 'view': self.origin_node.network.view,
                 'seqno': seqno,
-                'digest': 0,
+                'digest': digest,
                 'new_blocks': new_blocks,
                 'block_bodies': block_bodies,
                 'size': kB_to_MB(message_size+new_blocks_size)
                 }
     
     def prepare(self, seqno):
-        # TODO: change digest to header.hash
+        digest = 0
+        if self.origin_node.is_malicious == MaliciousModel.ACTIVE:
+            digest = 1
+            
         return {
             'id': 'prepare',
             'view': self.origin_node.network.view,
             'seqno': seqno,
-            'digest': 0,
+            'digest': digest,
             'replica_id': self.origin_node.replica_id,
             'size': kB_to_MB(self._message_size['prepare'])
         }
     
     # Originally copied from "block_bodies()" in the ETH version of message.py
     def commit(self, seqno):
+        digest = 0
+        if self.origin_node.is_malicious == MaliciousModel.ACTIVE:
+            digest = 1
+            
         return {
             'id': 'commit',
             'view': self.origin_node.network.view,
             'seqno': seqno,
-            'digest': 0,
+            'digest': digest,
             'replica_id': self.origin_node.replica_id,
             'size': kB_to_MB(self._message_size['commit'])
         }
@@ -109,6 +120,10 @@ class Message:
         }
 
     def checkpoint(self, seqno, replica_id):
+        digest = 0
+        if self.origin_node.is_malicious == MaliciousModel.ACTIVE:
+            digest = 1
+            
         return {
             'id': 'checkpoint',
             'seqno': seqno,

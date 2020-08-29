@@ -49,6 +49,7 @@ class PBFTNode(Node):
                 env, self, self.consensus)
             self.env.process(self._check_timeout()) #When node is initialized, begin periodically checking for timeout
             self.env.process(self._checkpointing()) #When node is initialized, periodically check if a checkpoint should be taken
+        self.is_malicious = is_malicious
         self._handshaking = env.event()
         self.replica_id = replica_id
         # Jiali: a dict for logging msg/prepare/commit
