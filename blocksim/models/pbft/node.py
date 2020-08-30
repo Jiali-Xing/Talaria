@@ -53,7 +53,7 @@ class PBFTNode(Node):
             self.env.process(self._checkpointing()) #When node is initialized, periodically check if a checkpoint should be taken
             
         if self.is_malicious == MaliciousModel.PASSIVE:
-            self.drop_probability = 0.5
+            self.drop_probability = 0.1
         
         self._handshaking = env.event()
         self.replica_id = replica_id
