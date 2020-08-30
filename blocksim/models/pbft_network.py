@@ -5,11 +5,13 @@ from blocksim.utils import get_random_values, time, get_latency_delay
 from random import random
 from enum import Enum
 
-#Ryan: Use this enum to be able to extensively configure different types of 'maliciousness'
+
+# Ryan: Use this enum to be able to extensively configure different types of 'maliciousness'
 class MaliciousModel(Enum):
     NOT_MALICIOUS = 0
     ACTIVE = 1
     PASSIVE = 2
+
 
 class Network:
     def __init__(self, env, name):

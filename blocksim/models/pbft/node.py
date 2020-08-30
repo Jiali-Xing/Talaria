@@ -41,6 +41,7 @@ class PBFTNode(Node):
                          consensus,
                          is_authority)
         self.temp_headers = {}
+        self.is_malicious = is_malicious
         self.network_message = Message(self)
         if is_authority:
             self.current_view = self.network.view
@@ -51,7 +52,6 @@ class PBFTNode(Node):
             self.env.process(self._check_timeout()) #When node is initialized, begin periodically checking for timeout
             self.env.process(self._checkpointing()) #When node is initialized, periodically check if a checkpoint should be taken
             
-        self.is_malicious = is_malicious
         if self.is_malicious == MaliciousModel.PASSIVE:
             self.drop_probability = 0.5
         

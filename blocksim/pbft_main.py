@@ -100,8 +100,8 @@ if __name__ == '__main__':
 
     # for i in range(1, 11):
     for i in [10]:
-        # json_file = 'tx_count_' + str(i) + '000.json'
-        json_file = 'tx_count_1.json'
+        json_file = 'tx_count_' + str(i) + '000.json'
+        # json_file = 'tx_count_1.json'
         
         trials = 1
         time_record = []
