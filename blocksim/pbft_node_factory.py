@@ -80,12 +80,19 @@ class NodeFactory:
         with path.open('r') as infile:
             reader = csv.reader(infile)
             node_region = {rows[0]: rows[3] for rows in reader}
+
+        with path.open('r') as infile:
+            # Jiali: Assume the last column in csv represents malicious type.
+            reader = csv.reader(infile)
+            nodes_malicious = {rows[0]: rows[7] for rows in reader}
+
             print(node_region)
         # node_id = 0  # Unique ID for each node
         nodes_list = []
         replica_id = 0
         for node_id, region_id in node_region.items():
             node_address = f'region_{region_id}-no_{node_id}'
+            is_malicious = int(nodes_malicious[node_id])
             if int(region_id) <= 3:
                 # Create the authority nodes if node is in US
                 mega_hashrate_range = make_tuple('(20, 40)')
@@ -98,7 +105,7 @@ class NodeFactory:
                               node_address,
                               replica_id,
                               True,
-                              MaliciousModel.NOT_MALICIOUS)
+                              MaliciousModel(is_malicious))
                 nodes_list.append(new)
             else:
                 # Creat the non-authority nodes if node is oversea
