@@ -84,6 +84,13 @@ class PBFTNode(Node):
         Jiali: This function is borrowed from bitcoin/node.py, without too much change."""
         if self.is_authority is False:
             raise RuntimeError(f'Node {self.location} is not a authority')
+
+        # Jiali: Assume passive malicious nodes doesn't broadcast blocks either.
+        if self.is_malicious == MaliciousModel.PASSIVE:
+            drop_message = random.choice([True, False], p=[self.drop_probability, 1 - self.drop_probability])
+            if drop_message:
+                return True
+
         block_size = self.env.config['pbft']['block_size_limit_mb']
         transactions_per_block_dist = self.env.config[
             'pbft']['number_transactions_per_block']
