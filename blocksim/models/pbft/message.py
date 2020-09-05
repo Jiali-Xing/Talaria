@@ -136,10 +136,11 @@ class Message:
             }
     
     def new_view(self, viewchange_msg, preprepare_msg):
-        self.origin_node.network.view = self.origin_node.network.view + 1
+        # Jiali: the following line is redundant as per line 425 in node.py: self.network.view += 1
+        # self.origin_node.network.view = self.origin_node.network.view + 1
         return {
             'id' : "newview",
-            'newview' : self.origin_node.network.view,
+            'newview' : self.origin_node.network.view + 1,
             'viewchange_messages' : viewchange_msg,
             'preprepare_messages' : preprepare_msg,
             'size' : kB_to_MB(self._message_size['newview_base']) + (len(viewchange_msg) * kB_to_MB(self._message_size['viewchange_base'])) + \

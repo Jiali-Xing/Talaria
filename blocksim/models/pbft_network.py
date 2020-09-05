@@ -70,8 +70,7 @@ class Network:
 
             # Ryan: Implement new block selection process here (updated for PBFT 7/3!)
             selected_node = self._list_authority_nodes[self.view]
-            print('If the signer is in-turn, wait for the exact time to arrive, ' +
-                  'sign and broadcast immediately, at %d' % self.env.now)
+            print(f'If the signer is in-turn, wait for the exact time to arrive, sign and broadcast immediately, at {time(self.env)}.')
 
             tx_left = self._build_new_block(selected_node)
 
