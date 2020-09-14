@@ -27,7 +27,7 @@ class PBFTNode(Node):
                  is_malicious=MaliciousModel.NOT_MALICIOUS
                  ):
         # Jiali: This function is borrowed from ethereum/node.py, without any change actually.
-        # Create the PoA genesis block and init the chain
+        # Create the PBFT genesis block and init the chain
         genesis = Block(BlockHeader())
         consensus = Consensus(env)
         chain = Chain(env, self, consensus, genesis, BaseDB())
@@ -41,6 +41,7 @@ class PBFTNode(Node):
                          consensus,
                          is_authority)
         self.temp_headers = {}
+        self.is_malicious = is_malicious
         self.network_message = Message(self)
         if is_authority:
             self.current_view = self.network.view
@@ -48,12 +49,11 @@ class PBFTNode(Node):
             # Transaction Queue to store the transactions
             self.transaction_queue = TransactionQueue(
                 env, self, self.consensus)
-            self.env.process(self._check_timeout()) #When node is initialized, begin periodically checking for timeout
-            self.env.process(self._checkpointing()) #When node is initialized, periodically check if a checkpoint should be taken
+            self.env.process(self._check_timeout())  # When node is initialized, begin periodically checking for timeout
+            self.env.process(self._checkpointing())  # When node is initialized, periodically check if a checkpoint should be taken
             
-        self.is_malicious = is_malicious
         if self.is_malicious == MaliciousModel.PASSIVE:
-            self.drop_probability = 0.5
+            self.drop_probability = 0.1
         
         self._handshaking = env.event()
         self.replica_id = replica_id
@@ -65,16 +65,16 @@ class PBFTNode(Node):
             'commit': defaultdict(set),
             'committed': defaultdict(bool),
             'reply': defaultdict(set),
-            'viewchange' : defaultdict(list), #TODO, correct for multiple occurrences 
+            'viewchange' : defaultdict(list),  # TODO, correct for multiple occurrences
             'checkpoint': defaultdict(set),
             'newview' : defaultdict(set)
         }
 
-        #Ryan: We want to model node failures and view changes...
-        self.timedout = False #Indicate if a node has timed out
-        self.timeoutVal = 5 #Some numerical time value for a timeout here
-        self.failure = False #Indicate if a node is down or will somehow act Byzantine
-        self.prevLog = {} #Keep track of previous log state so node can detect changes to it
+        # Ryan: We want to model node failures and view changes...
+        self.timedout = False  # Indicate if a node has timed out
+        self.timeoutVal = 30  # Some numerical time value for a timeout here
+        self.failure = False  # Indicate if a node is down or will somehow act Byzantine
+        self.prevLog = {}  # Keep track of previous log state so node can detect changes to it
         self.currSeqno = 0
         self.lastCheckpoint = 0
 
@@ -84,6 +84,13 @@ class PBFTNode(Node):
         Jiali: This function is borrowed from bitcoin/node.py, without too much change."""
         if self.is_authority is False:
             raise RuntimeError(f'Node {self.location} is not a authority')
+
+        # Jiali: Assume passive malicious nodes doesn't broadcast blocks either.
+        if self.is_malicious == MaliciousModel.PASSIVE:
+            drop_message = random.choice([True, False], p=[self.drop_probability, 1 - self.drop_probability])
+            if drop_message:
+                return True
+
         block_size = self.env.config['pbft']['block_size_limit_mb']
         transactions_per_block_dist = self.env.config[
             'pbft']['number_transactions_per_block']
@@ -151,8 +158,8 @@ class PBFTNode(Node):
                 self._receive_commit(envelope)
             if envelope.msg['id'] == 'checkpoint':
                 self._receive_checkpoint_message(envelope)
-            #Only the prospective next view primary should care about a viewchange
-            #This is checked within "receive_viewchange"
+            # Only the prospective next view primary should care about a viewchange
+            # This is checked within "receive_viewchange"
             if envelope.msg['id'] == 'viewchange':
                 self._receive_viewchange(envelope)
             if envelope.msg['id'] == 'newview':
@@ -254,7 +261,7 @@ class PBFTNode(Node):
         
         if (envelope.msg['new_blocks'] == None) and (envelope.msg['block_bodies'] == None):
             self.log['block'][seqno] = None
-            return #Do nothing because it was a no-op preprepare from a view change
+            return  # Do nothing because it was a no-op preprepare from a view change
         new_blocks = envelope.msg['new_blocks']
         block_bodies = envelope.msg['block_bodies']
 
@@ -346,17 +353,17 @@ class PBFTNode(Node):
 
     def _check_timeout(self):
         while True:
-            if self.prevLog and (len(self.prevLog['block']) == len(self.log['block'])): #No new blocks have been sent to a node + prevLog nonempty
+            if self.prevLog and (len(self.prevLog['block']) == len(self.log['block'])):  # No new blocks have been sent to a node + prevLog nonempty
                 self.timedout = True
                 self._send_viewchange()
 
-            self.prevLog = self.log #track log every timeout check
+            self.prevLog = self.log  # track log every timeout check
 
             yield self.env.timeout(self.timeoutVal)
 
     def _checkpointing(self):
         while True:
-            if (self.currSeqno % self.network.checkpoint_size) == 0: # and (self.currSeqno - self.lastCheckpoint == self.network.checkpoint_size): #Periodically see if we have reached a checkpoint handler
+            if (self.currSeqno % self.network.checkpoint_size) == 0:  # and (self.currSeqno - self.lastCheckpoint == self.network.checkpoint_size):  # Periodically see if we have reached a checkpoint handler
                 self._send_checkpoint_message(self.currSeqno)
             yield self.env.timeout(self.network.checkpoint_delay)
 
@@ -372,10 +379,10 @@ class PBFTNode(Node):
         self.log['checkpoint'][seqno].add(envelope.origin.address)
 
         if self.log['checkpoint'][seqno] and len(self.log['checkpoint'][seqno]) >= 2*self.network.f:
-            #Clear out log entries covered by a checkpoint state
+            # Clear out log entries covered by a checkpoint state
             if self.log['committed'][self.lastCheckpoint]:
                 for oldSeqno in range(self.lastCheckpoint, seqno):
-                    #TODO: Iron out what to do with reply messages since they use timestamp instead of seqno
+                    # TODO: Iron out what to do with reply messages since they use timestamp instead of seqno
                     del self.log['reply'][self.log['block'][oldSeqno].header.timestamp]
                     del self.log['block'][oldSeqno]
                     del self.log['prepare'][oldSeqno]
@@ -384,7 +391,7 @@ class PBFTNode(Node):
                     del self.log['committed'][oldSeqno]
                 self.lastCheckpoint = seqno
 
-    #IMPORTANT NOTE: View changes cannot be correctly implemented until checkpoints are first!
+    # IMPORTANT NOTE: View changes cannot be correctly implemented until checkpoints are first!
     def _send_viewchange(self):
         checkpoint_msg = self.log['checkpoint'][self.lastCheckpoint]
         prepare_msg = self._collect_viewchange_prepareset()
@@ -397,16 +404,16 @@ class PBFTNode(Node):
         for seqno in range(self.lastCheckpoint, self.currSeqno):
             if self.log['prepared'][seqno]:
                 prepareset.append(self.log['block'][seqno])
-                #for node in range(1, (2*self.network.f) + 1):
+                # for node in range(1, (2*self.network.f) + 1):
                 #    prepareset.append(self.log['prepare'][seqno][node])
-                #TODO: May want to consider converting the log to use lists instead of sets and just deal with checking for duplicates.
-                #Unless there is a no-duplicate list?
-                prepareset.append(self.log['block'][seqno]) #Could be more than 2f+1, but for now...
+                # TODO: May want to consider converting the log to use lists instead of sets and just deal with checking for duplicates.
+                # Unless there is a no-duplicate list?
+                prepareset.append(self.log['block'][seqno] )  # Could be more than 2f+1, but for now...
         return prepareset
         
     def _receive_viewchange(self, envelope):
         newView = envelope.msg.get('nextview')
-        for (address, msg) in self.log['viewchange'][newView]: #Deal with list duplicates for viewchanges (need actual contents of viewchange messages, so can't use set)
+        for (address, msg) in self.log['viewchange'][newView]:  # Deal with list duplicates for viewchanges (need actual contents of viewchange messages, so can't use set)
             if address == envelope.origin.address:
                 self.log['viewchange'][newView].remove((address,msg))
                 self.log['viewchange'][newView].append((envelope.origin.address, envelope.msg))
@@ -430,7 +437,7 @@ class PBFTNode(Node):
         preprepareset = []
         max_checkpt = 0
         existing_seqnos = []
-        max_s = 0 #See PBFT paper for description of 'max_s'
+        max_s = 0  # See PBFT paper for description of 'max_s'
         for (origin_address, msg) in viewchange_msg:
             ckpt = msg.get('checkpoint_seqno')
             if ckpt > max_checkpt:
@@ -442,17 +449,17 @@ class PBFTNode(Node):
                 if prepare_seqno > max_s:
                     max_s = prepare_seqno
             
-        min_s = max_checkpt #See PBFT paper for description of 'min_s'
+        min_s = max_checkpt  # See PBFT paper for description of 'min_s'
         
-        #Check min_s relative to latest node checkpoint
-        #If they don't match, forge a stability proof!
+        # Check min_s relative to latest node checkpoint
+        # If they don't match, forge a stability proof!
         if min_s > self.lastCheckpoint:
             for i in range(2 * self.network.f + 1):
                 new_checkpoint = self.network_message.checkpoint(min_s, i)
                 envelope = Envelope(new_checkpoint, time(self.env), None, None)
                 self._receive_checkpoint_message(envelope)
         
-        #New preprepare messages created for uncommitted messages from old view
+        # New preprepare messages created for uncommitted messages from old view
         new_prepreparemsg = None
         for seqno in range(min_s, max_s + 1):
             if seqno in existing_seqnos:
@@ -465,7 +472,7 @@ class PBFTNode(Node):
                 
             preprepareset.append(new_prepreparemsg)
             envelope = Envelope(new_prepreparemsg, time(self.env), None, None)
-            self._receive_pre_prepare(envelope) #Leverage already existing message to log 'O' for primary
+            self._receive_pre_prepare(envelope)  # Leverage already existing message to log 'O' for primary
         return preprepareset
     
     def _receive_newview(self, envelope):
