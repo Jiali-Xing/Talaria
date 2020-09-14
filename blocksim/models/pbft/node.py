@@ -249,6 +249,9 @@ class PBFTNode(Node):
     def _receive_pre_prepare(self, envelope):
         seqno = envelope.msg.get('seqno')
         
+        if not self.validate_message_digest(envelope.msg):
+            return
+        
         if (envelope.msg['new_blocks'] == None) and (envelope.msg['block_bodies'] == None):
             self.log['block'][seqno] = None
             return #Do nothing because it was a no-op preprepare from a view change
@@ -284,6 +287,8 @@ class PBFTNode(Node):
 
     def _receive_prepare(self, envelope):
         """Handle prepare received"""
+        if not self.validate_message_digest(envelope.msg):
+            return
         seqno = envelope.msg.get('seqno')
         self.log['prepare'][seqno].add(envelope.origin.address)
         # Replica multicasts a COMMIT to the other replicas when prepared becomes true.
@@ -303,6 +308,8 @@ class PBFTNode(Node):
         """Handle block bodies received
         Assemble the block header in a temporary list with the block body received and
         insert it in the blockchain"""
+        if not self.validate_message_digest(envelope.msg):
+            return
         seqno = envelope.msg.get('seqno')
         self.log['commit'][seqno].add(envelope.origin.address)
         # committed-local is true if and only if prepared is true and has accepted 2f+1 commits
@@ -334,7 +341,7 @@ class PBFTNode(Node):
             self.chain.add_block(new_block)
 
     ##                                               ##
-    ## View Changes, Checkpoints, and Failures       ##
+    ##         View Changes and Checkpoints          ##
     ##                                               ##
 
     def _check_timeout(self):
@@ -359,6 +366,8 @@ class PBFTNode(Node):
         self.log['checkpoint'][seqno].add(self.address)
 
     def _receive_checkpoint_message(self, envelope):
+        if not self.validate_message_digest(envelope.msg):
+            return
         seqno = envelope.msg.get('seqno')
         self.log['checkpoint'][seqno].add(envelope.origin.address)
 
@@ -475,6 +484,16 @@ class PBFTNode(Node):
 
     def _is_next_primary(self):
         return self.replica_id == ((self.network.view + 1) % len(self.network._list_authority_nodes))
+    
+    ##                                         ##
+    ##     Malicious Nodes-related methods     ##
+    ##                                         ##
+    
+    def validate_message_digest(self, message):
+        try:
+            return not message["digest"]
+        except KeyError:
+            return "This message has no digest"
 
     ##              ##
     ## Chains       ##
