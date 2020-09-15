@@ -353,6 +353,7 @@ class PBFTNode(Node):
 
     def _check_timeout(self):
         while True:
+            # TODO: Bugfix. Stop timeout and viewchange sending after leader change! Jiali
             if self.prevLog and (len(self.prevLog['block']) == len(self.log['block'])):  # No new blocks have been sent to a node + prevLog nonempty
                 self.timedout = True
                 self._send_viewchange()
@@ -444,6 +445,7 @@ class PBFTNode(Node):
                 max_checkpt = ckpt
             prepareset = msg.get('prepare_messages')
             for prepare_msg in prepareset:
+                # TODO: Bugfix needed.
                 prepare_seqno = prepare_msg.get('seqno')
                 existing_seqnos.append(prepare_seqno)
                 if prepare_seqno > max_s:
@@ -498,7 +500,7 @@ class PBFTNode(Node):
     
     def validate_message_digest(self, message):
         try:
-            return not message["digest"]
+            return message["digest"]
         except KeyError:
             return "This message has no digest"
 

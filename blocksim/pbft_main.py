@@ -108,7 +108,7 @@ if __name__ == '__main__':
         sim_time_record = []
 
         for i in range(trials):
-            day = 1
+            day = 2
             start_time = time.time()
             simulated_time = run_model(json_file, day=day)
             sim_time_record.append(simulated_time)

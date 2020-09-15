@@ -125,13 +125,13 @@ class Message:
     
     def view_change(self, ckpt_seqno, checkpoint_msg, prepare_msg):
         return {
-           'id' : "viewchange",
-           'nextview' : self.origin_node.network.view + 1,
-           'checkpoint_seqno' : ckpt_seqno,
-           'checkpoint_messages' : checkpoint_msg,
-           'prepare_messages' : prepare_msg,
-           'replica_id' : self.origin_node.replica_id,
-           'size' : kB_to_MB(self._message_size['viewchange_base']) + (len(checkpoint_msg) * kB_to_MB(self._message_size['checkpoint'])) + \
+           'id': "viewchange",
+           'nextview': self.origin_node.network.view + 1,
+           'checkpoint_seqno': ckpt_seqno,
+           'checkpoint_messages': checkpoint_msg,
+           'prepare_messages': prepare_msg,
+           'replica_id': self.origin_node.replica_id,
+           'size': kB_to_MB(self._message_size['viewchange_base']) + (len(checkpoint_msg) * kB_to_MB(self._message_size['checkpoint'])) + \
             (len(prepare_msg) * kB_to_MB(self._message_size['prepare']))
             }
     
@@ -139,10 +139,10 @@ class Message:
         # Jiali: the following line is redundant as per line 425 in node.py: self.network.view += 1
         # self.origin_node.network.view = self.origin_node.network.view + 1
         return {
-            'id' : "newview",
-            'newview' : self.origin_node.network.view + 1,
-            'viewchange_messages' : viewchange_msg,
-            'preprepare_messages' : preprepare_msg,
-            'size' : kB_to_MB(self._message_size['newview_base']) + (len(viewchange_msg) * kB_to_MB(self._message_size['viewchange_base'])) + \
+            'id': "newview",
+            'newview': self.origin_node.network.view + 1,
+            'viewchange_messages': viewchange_msg,
+            'preprepare_messages': preprepare_msg,
+            'size': kB_to_MB(self._message_size['newview_base']) + (len(viewchange_msg) * kB_to_MB(self._message_size['viewchange_base'])) + \
             (len(preprepare_msg) * kB_to_MB(self._message_size['tx']))
             }
