@@ -79,8 +79,7 @@ class Message:
                 }
     
     def prepare(self, seqno):
-        
-            
+
         return {
             'id': 'prepare',
             'view': self.origin_node.network.view,

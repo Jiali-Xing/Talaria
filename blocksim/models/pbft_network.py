@@ -74,10 +74,10 @@ class Network:
 
             tx_left = self._build_new_block(selected_node)
 
-            # If we have three consecutive empty block, stop.
+            # If we have seven consecutive empty block, stop.
             if not tx_left:
                 empty_block += 1
-                if empty_block >= 3:
+                if empty_block >= 7:
                     break
             else:
                 empty_block = 0

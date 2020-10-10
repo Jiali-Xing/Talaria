@@ -218,6 +218,7 @@ class PBFTNode(Node):
             self.env.process(self.broadcast(transactions_msg))
 
     def _receive_full_transactions(self, envelope):
+        # TODO: Why don't we have validation timeout here?
         """Handle full tx received. If node is authority store transactions in a pool (ordered by the gas price)"""
         transactions = envelope.msg.get('transactions')
         valid_transactions = []
@@ -254,6 +255,7 @@ class PBFTNode(Node):
         self.env.process(self.broadcast(new_blocks_msg))
 
     def _receive_pre_prepare(self, envelope):
+        # TODO: Why don't we have validation timeout here?
         seqno = envelope.msg.get('seqno')
         
         if not self.validate_message_digest(envelope.msg):
@@ -293,6 +295,7 @@ class PBFTNode(Node):
         self.env.process(self.broadcast_to_authorities(prepare_msg))
 
     def _receive_prepare(self, envelope):
+        # TODO: Why don't we have validation timeout here?
         """Handle prepare received"""
         if not self.validate_message_digest(envelope.msg):
             return
@@ -312,6 +315,7 @@ class PBFTNode(Node):
         self.env.process(self.broadcast_to_authorities(commit_msg))
 
     def _receive_commit(self, envelope):
+        # TODO: Why don't we have validation timeout here?
         """Handle block bodies received
         Assemble the block header in a temporary list with the block body received and
         insert it in the blockchain"""
@@ -445,8 +449,8 @@ class PBFTNode(Node):
                 max_checkpt = ckpt
             prepareset = msg.get('prepare_messages')
             for prepare_msg in prepareset:
-                # TODO: Bugfix needed.
-                prepare_seqno = prepare_msg.get('seqno')
+                # Bug fixed. AttributeError: 'Block' object has no attribute 'get'
+                prepare_seqno = prepare_msg.header.number
                 existing_seqnos.append(prepare_seqno)
                 if prepare_seqno > max_s:
                     max_s = prepare_seqno

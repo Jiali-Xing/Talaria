@@ -76,7 +76,7 @@ def run_model(json_file='tx_count_100.json', day=1):
             node.restore_chains(day-1)
 
     transaction_factory = TransactionFactory(world)
-    transaction_factory.broadcast(json_file, 9, nodes_list)
+    transaction_factory.broadcast(json_file, 2, nodes_list)
 
     world.start_simulation()
     report_node_chain(world, nodes_list)
@@ -108,7 +108,7 @@ if __name__ == '__main__':
         sim_time_record = []
 
         for i in range(trials):
-            day = 2
+            day = 1
             start_time = time.time()
             simulated_time = run_model(json_file, day=day)
             sim_time_record.append(simulated_time)
