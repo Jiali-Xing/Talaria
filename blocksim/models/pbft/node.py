@@ -69,6 +69,9 @@ class PBFTNode(Node):
             'checkpoint': defaultdict(set),
             'newview' : defaultdict(set)
         }
+        #A dict to store the actual prepare messages.They should be identical
+        #per seqno. update when a valid prepare message is received.
+        self.preparemsg = {}
 
         # Ryan: We want to model node failures and view changes...
         self.timedout = False  # Indicate if a node has timed out
@@ -255,7 +258,7 @@ class PBFTNode(Node):
         self.env.process(self.broadcast(new_blocks_msg))
 
     def _receive_pre_prepare(self, envelope):
-        # TODO: Why don't we have validation timeout here?
+        yield self.env.timeout(self.network.validation_delay)
         seqno = envelope.msg.get('seqno')
         
         if not self.validate_message_digest(envelope.msg):
@@ -295,12 +298,13 @@ class PBFTNode(Node):
         self.env.process(self.broadcast_to_authorities(prepare_msg))
 
     def _receive_prepare(self, envelope):
-        # TODO: Why don't we have validation timeout here?
+        yield self.env.timeout(self.network.validation_delay)
         """Handle prepare received"""
         if not self.validate_message_digest(envelope.msg):
             return
         seqno = envelope.msg.get('seqno')
         self.log['prepare'][seqno].add(envelope.origin.address)
+        self.preparemsg[seqno] = envelope.msg
         # Replica multicasts a COMMIT to the other replicas when prepared becomes true.
         if len(self.log['prepare'][seqno]) >= 2*self.network.f:
             self.log['prepared'][seqno] = True
@@ -315,7 +319,7 @@ class PBFTNode(Node):
         self.env.process(self.broadcast_to_authorities(commit_msg))
 
     def _receive_commit(self, envelope):
-        # TODO: Why don't we have validation timeout here?
+        yield self.env.timeout(self.network.validation_delay)
         """Handle block bodies received
         Assemble the block header in a temporary list with the block body received and
         insert it in the blockchain"""
@@ -341,6 +345,7 @@ class PBFTNode(Node):
     # How non-authority nodes handle the receipt of a reply message from an authority
     def _receive_reply(self, envelope):
         # Handle a non-authority block receiving information about adding a block
+        yield self.env.timeout(self.network.validation_delay)
         if self.is_authority:
             raise RuntimeError(f'Node {self.location} is an authority - they should not receive replies')
             
@@ -378,6 +383,7 @@ class PBFTNode(Node):
         self.log['checkpoint'][seqno].add(self.address)
 
     def _receive_checkpoint_message(self, envelope):
+        yield self.env.timeout(self.network.validation_delay)
         if not self.validate_message_digest(envelope.msg):
             return
         seqno = envelope.msg.get('seqno')
@@ -417,6 +423,7 @@ class PBFTNode(Node):
         return prepareset
         
     def _receive_viewchange(self, envelope):
+        yield self.env.timeout(self.network.validation_delay)
         newView = envelope.msg.get('nextview')
         for (address, msg) in self.log['viewchange'][newView]:  # Deal with list duplicates for viewchanges (need actual contents of viewchange messages, so can't use set)
             if address == envelope.origin.address:
@@ -469,8 +476,8 @@ class PBFTNode(Node):
         new_prepreparemsg = None
         for seqno in range(min_s, max_s + 1):
             if seqno in existing_seqnos:
-                new_blocks = self.log['prepare'][seqno].get('new_blocks')
-                block_bodies = self.log['prepare'][seqno].get('block_bodies')
+                new_blocks = self.preparemsg[seqno].get('new_blocks')
+                block_bodies = self.preparemsg[seqno].get('block_bodies')
                 new_prepreparemsg = self.network_message.pre_prepare(seqno, new_blocks, block_bodies, True)
                 
             else:
@@ -482,6 +489,7 @@ class PBFTNode(Node):
         return preprepareset
     
     def _receive_newview(self, envelope):
+        yield self.env.timeout(self.network.validation_delay)
         if self._is_primary():
             return
         
