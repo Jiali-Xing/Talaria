@@ -10,7 +10,7 @@ class Message:
         _env = origin_node.env
         self._message_size = _env.config['pbft']['message_size_kB']
 
-        # Digest is 0 meaning correct/valid, 1 is malicious and modified/invalid message.
+        # Digest is 1 meaning correct/valid, 0 is malicious and modified/invalid message.
         self.digest = 0 if self.origin_node.is_malicious == MaliciousModel.ACTIVE else 1
 
     def status(self):

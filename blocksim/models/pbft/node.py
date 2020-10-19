@@ -258,9 +258,9 @@ class PBFTNode(Node):
         self.env.process(self.broadcast(new_blocks_msg))
 
     def _receive_pre_prepare(self, envelope):
-        yield self.env.timeout(self.network.validation_delay)
+        # yield self.env.timeout(self.network.validation_delay)
         seqno = envelope.msg.get('seqno')
-        
+
         if not self.validate_message_digest(envelope.msg):
             return
         
@@ -298,7 +298,7 @@ class PBFTNode(Node):
         self.env.process(self.broadcast_to_authorities(prepare_msg))
 
     def _receive_prepare(self, envelope):
-        yield self.env.timeout(self.network.validation_delay)
+        # yield self.env.timeout(self.network.validation_delay)
         """Handle prepare received"""
         if not self.validate_message_digest(envelope.msg):
             return
@@ -319,7 +319,7 @@ class PBFTNode(Node):
         self.env.process(self.broadcast_to_authorities(commit_msg))
 
     def _receive_commit(self, envelope):
-        yield self.env.timeout(self.network.validation_delay)
+        # yield self.env.timeout(self.network.validation_delay)
         """Handle block bodies received
         Assemble the block header in a temporary list with the block body received and
         insert it in the blockchain"""
@@ -345,7 +345,7 @@ class PBFTNode(Node):
     # How non-authority nodes handle the receipt of a reply message from an authority
     def _receive_reply(self, envelope):
         # Handle a non-authority block receiving information about adding a block
-        yield self.env.timeout(self.network.validation_delay)
+        # yield self.env.timeout(self.network.validation_delay)
         if self.is_authority:
             raise RuntimeError(f'Node {self.location} is an authority - they should not receive replies')
             
@@ -383,7 +383,7 @@ class PBFTNode(Node):
         self.log['checkpoint'][seqno].add(self.address)
 
     def _receive_checkpoint_message(self, envelope):
-        yield self.env.timeout(self.network.validation_delay)
+        # yield self.env.timeout(self.network.validation_delay)
         if not self.validate_message_digest(envelope.msg):
             return
         seqno = envelope.msg.get('seqno')
@@ -423,7 +423,7 @@ class PBFTNode(Node):
         return prepareset
         
     def _receive_viewchange(self, envelope):
-        yield self.env.timeout(self.network.validation_delay)
+        # yield self.env.timeout(self.network.validation_delay)
         newView = envelope.msg.get('nextview')
         for (address, msg) in self.log['viewchange'][newView]:  # Deal with list duplicates for viewchanges (need actual contents of viewchange messages, so can't use set)
             if address == envelope.origin.address:
@@ -489,7 +489,7 @@ class PBFTNode(Node):
         return preprepareset
     
     def _receive_newview(self, envelope):
-        yield self.env.timeout(self.network.validation_delay)
+        # yield self.env.timeout(self.network.validation_delay)
         if self._is_primary():
             return
         
@@ -511,6 +511,7 @@ class PBFTNode(Node):
     ##                                         ##
     
     def validate_message_digest(self, message):
+        # Note that digest is 1 meaning valid message!
         try:
             return message["digest"]
         except KeyError:

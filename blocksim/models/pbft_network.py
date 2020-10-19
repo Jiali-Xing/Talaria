@@ -27,7 +27,7 @@ class Network:
         self.f = 0  # Just so you can see that max faulty nodes is a parameter of the network, it's initialized below
         self.checkpoint_size = 1 #How many blocks before you take a checkpoint, assuming seqno is per block
         self.checkpoint_delay = 10
-        self.validation_delay = 0.5
+        self.validation_delay = 0.1
 
     def get_node(self, address):
         return self._nodes.get(address)
@@ -70,6 +70,7 @@ class Network:
             yield self.env.timeout(time_between_blocks)
 
             # Ryan: Implement new block selection process here (updated for PBFT 7/3!)
+            # TODO: IndexError: list index out of range, bugfix needed
             selected_node = self._list_authority_nodes[self.view]
             print(f'If the signer is in-turn, wait for the exact time to arrive, sign and broadcast immediately, at {time(self.env)}.')
 
