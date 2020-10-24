@@ -70,8 +70,8 @@ class Network:
             yield self.env.timeout(time_between_blocks)
 
             # Ryan: Implement new block selection process here (updated for PBFT 7/3!)
-            # TODO: IndexError: list index out of range, bugfix needed
-            selected_node = self._list_authority_nodes[self.view]
+            # Bugfix: IndexError: list index out of range, bugfix done
+            selected_node = self._list_authority_nodes[self.view % len(self._list_authority_nodes)]
             print(f'If the signer is in-turn, wait for the exact time to arrive, sign and broadcast immediately, at {time(self.env)}.')
 
             tx_left = self._build_new_block(selected_node)

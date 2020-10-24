@@ -425,6 +425,8 @@ class PBFTNode(Node):
     def _receive_viewchange(self, envelope):
         # yield self.env.timeout(self.network.validation_delay)
         newView = envelope.msg.get('nextview')
+        if newView <= self.network.view:
+            return
         for (address, msg) in self.log['viewchange'][newView]:  # Deal with list duplicates for viewchanges (need actual contents of viewchange messages, so can't use set)
             if address == envelope.origin.address:
                 self.log['viewchange'][newView].remove((address,msg))
@@ -457,6 +459,7 @@ class PBFTNode(Node):
             prepareset = msg.get('prepare_messages')
             for prepare_msg in prepareset:
                 # Bug fixed. AttributeError: 'Block' object has no attribute 'get'
+                # TODO: Bugfix. AttributeError: 'NoneType' object has no attribute 'header'
                 prepare_seqno = prepare_msg.header.number
                 existing_seqnos.append(prepare_seqno)
                 if prepare_seqno > max_s:
