@@ -221,7 +221,6 @@ class PBFTNode(Node):
             self.env.process(self.broadcast(transactions_msg))
 
     def _receive_full_transactions(self, envelope):
-        # TODO: Why don't we have validation timeout here?
         """Handle full tx received. If node is authority store transactions in a pool (ordered by the gas price)"""
         transactions = envelope.msg.get('transactions')
         valid_transactions = []
@@ -459,11 +458,12 @@ class PBFTNode(Node):
             prepareset = msg.get('prepare_messages')
             for prepare_msg in prepareset:
                 # Bug fixed. AttributeError: 'Block' object has no attribute 'get'
-                # TODO: Bugfix. AttributeError: 'NoneType' object has no attribute 'header'
-                prepare_seqno = prepare_msg.header.number
-                existing_seqnos.append(prepare_seqno)
-                if prepare_seqno > max_s:
-                    max_s = prepare_seqno
+                # Bug fixed. AttributeError: 'NoneType' object has no attribute 'header'
+                if prepare_msg is not None:
+                    prepare_seqno = prepare_msg.header.number
+                    existing_seqnos.append(prepare_seqno)
+                    if prepare_seqno > max_s:
+                        max_s = prepare_seqno
             
         min_s = max_checkpt  # See PBFT paper for description of 'min_s'
         
