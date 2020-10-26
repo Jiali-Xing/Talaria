@@ -75,9 +75,9 @@ class PBFTNode(Node):
 
         # Ryan: We want to model node failures and view changes...
         self.timedout = False  # Indicate if a node has timed out
-        self.timeoutVal = 40  # Some numerical time value for a timeout here
+        self.timeoutVal = 30  # Some numerical time value for a timeout here
         self.failure = False  # Indicate if a node is down or will somehow act Byzantine
-        self.prevLog = {}  # Keep track of previous log state so node can detect changes to it
+        # self.prevLog = {}  # Keep track of previous log state so node can detect changes to it
         self.currSeqno = 0
         self.lastCheckpoint = 0
 
@@ -144,7 +144,7 @@ class PBFTNode(Node):
             drop_message = random.choice([True, False], p=[self.drop_probability, 1 - self.drop_probability])
             if drop_message:
                 return
-                # TODO: to relax the assumption of malicious nodes handling newview
+                # to relax the assumption of malicious nodes handling newview
                 # if envelope.msg['id'] not in ('checkpoint', 'viewchange', 'newview'):
                 #     return
         
@@ -363,15 +363,16 @@ class PBFTNode(Node):
     ##                                               ##
 
     def _check_timeout(self):
-        self.prevView = -1
+        self.prevView = 0
         self.timeoutCount = 0
+        self.prevLogBlockLength = 0
 
         while True:
             yield self.env.timeout(self.timeoutVal)
-            if self.prevLog:
-                assert len(self.prevLog['block']) == len(self.log['block'])
+            # TOT: Bugfix. prevLog always same as log
+            # assert self.prevLogBlockLength == len(self.log['block'])
             # TODO: Bugfix. Stop timeout and viewchange sending after leader change! Jiali
-            if self.prevLog and self.prevView == self.network.view and (len(self.prevLog['block']) == len(self.log['block'])):  # No new blocks have been sent to a node + prevLog nonempty
+            if self.prevView == self.network.view and (self.prevLogBlockLength == len(self.log['block'])):  # No new blocks have been sent to a node + prevLog nonempty
                 self.timedout = True
                 self._send_viewchange()
                 self.timeoutCount += 1
@@ -379,7 +380,7 @@ class PBFTNode(Node):
                 self.timeoutCount = 0
 
             self.prevView = self.network.view
-            self.prevLog = self.log  # track log every timeout check
+            self.prevLogBlockLength = len(self.log['block'])  # track log every timeout check
 
     def _checkpointing(self):
         while True:
