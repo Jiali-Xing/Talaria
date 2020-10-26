@@ -54,7 +54,7 @@ class TransactionFactory:
             'ethereum': self._generate_ethereum_tx
         }
 
-        for i in range(len(sum_tx)):
+        for i in range(min(len(nodes_list), len(sum_tx))):
             transactions = []
             for _i in range(sum_tx[i]):
                 # Generate a random string to a transaction be distinct from others

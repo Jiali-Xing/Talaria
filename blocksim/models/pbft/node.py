@@ -53,7 +53,7 @@ class PBFTNode(Node):
             self.env.process(self._checkpointing())  # When node is initialized, periodically check if a checkpoint should be taken
             
         if self.is_malicious == MaliciousModel.PASSIVE:
-            self.drop_probability = 0.1
+            self.drop_probability = 0.999
         
         self._handshaking = env.event()
         self.replica_id = replica_id
@@ -75,7 +75,7 @@ class PBFTNode(Node):
 
         # Ryan: We want to model node failures and view changes...
         self.timedout = False  # Indicate if a node has timed out
-        self.timeoutVal = 30  # Some numerical time value for a timeout here
+        self.timeoutVal = 40  # Some numerical time value for a timeout here
         self.failure = False  # Indicate if a node is down or will somehow act Byzantine
         self.prevLog = {}  # Keep track of previous log state so node can detect changes to it
         self.currSeqno = 0
@@ -144,6 +144,9 @@ class PBFTNode(Node):
             drop_message = random.choice([True, False], p=[self.drop_probability, 1 - self.drop_probability])
             if drop_message:
                 return
+                # TODO: to relax the assumption of malicious nodes handling newview
+                # if envelope.msg['id'] not in ('checkpoint', 'viewchange', 'newview'):
+                #     return
         
         if envelope.msg['id'] == 'status':
             self._receive_status(envelope)
@@ -360,15 +363,23 @@ class PBFTNode(Node):
     ##                                               ##
 
     def _check_timeout(self):
+        self.prevView = -1
+        self.timeoutCount = 0
+
         while True:
+            yield self.env.timeout(self.timeoutVal)
+            if self.prevLog:
+                assert len(self.prevLog['block']) == len(self.log['block'])
             # TODO: Bugfix. Stop timeout and viewchange sending after leader change! Jiali
-            if self.prevLog and (len(self.prevLog['block']) == len(self.log['block'])):  # No new blocks have been sent to a node + prevLog nonempty
+            if self.prevLog and self.prevView == self.network.view and (len(self.prevLog['block']) == len(self.log['block'])):  # No new blocks have been sent to a node + prevLog nonempty
                 self.timedout = True
                 self._send_viewchange()
+                self.timeoutCount += 1
+            else:
+                self.timeoutCount = 0
 
+            self.prevView = self.network.view
             self.prevLog = self.log  # track log every timeout check
-
-            yield self.env.timeout(self.timeoutVal)
 
     def _checkpointing(self):
         while True:
@@ -405,7 +416,7 @@ class PBFTNode(Node):
     def _send_viewchange(self):
         checkpoint_msg = self.log['checkpoint'][self.lastCheckpoint]
         prepare_msg = self._collect_viewchange_prepareset()
-        viewchange_msg = self.network_message.view_change(self.lastCheckpoint , checkpoint_msg, prepare_msg)
+        viewchange_msg = self.network_message.view_change(self.lastCheckpoint, checkpoint_msg, prepare_msg)
         self.log['viewchange'][self.network.view].append((self.address, viewchange_msg))
         self.env.process(self.broadcast_to_authorities(viewchange_msg))
         
@@ -444,7 +455,7 @@ class PBFTNode(Node):
         newview_msg = self.network_message.new_view(viewchange_msg, preprepare_msg)
         self.log['newview'][newView].add(self.address)
         self.env.process(self.broadcast_to_authorities(newview_msg))
-        self.network.view += 1
+        self.network.view += self.timeoutCount
     
     def _collect_newview_preprepareset(self, viewchange_msg):
         preprepareset = []
@@ -507,7 +518,7 @@ class PBFTNode(Node):
         return self.replica_id == (self.network.view % len(self.network._list_authority_nodes))
 
     def _is_next_primary(self):
-        return self.replica_id == ((self.network.view + 1) % len(self.network._list_authority_nodes))
+        return self.replica_id == ((self.network.view + self.timeoutCount) % len(self.network._list_authority_nodes))
     
     ##                                         ##
     ##     Malicious Nodes-related methods     ##
