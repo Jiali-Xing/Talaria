@@ -5,8 +5,8 @@
       "parameters": "(0.00049512563, 0.004892564, 0.0000425785)"
     },
     "block_validation": {
-      "name": "lognorm",
-      "parameters": "(0.11269612563, 0.23958425545, 0.00264255485)"
+      "name": "gamma",
+      "parameters": "(2.116903, 0.1166667, 0.05272388)"
     },
     "time_between_blocks_seconds": {
       "name": "norm",
