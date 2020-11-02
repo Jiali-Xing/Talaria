@@ -196,6 +196,27 @@ class Node:
             origin_node = connection.origin_node
             destination_node = connection.destination_node
 
+            # Perform block validation before sending
+            # For Ethereum it performs validation when receives the header:
+            if msg['id'] == 'pre-prepare':
+                for header in msg['new_blocks']:
+                    delay = self.consensus.validate_block()
+                    yield self.env.timeout(delay)
+            # For Bitcoin it performs validation when receives the full block:
+            if msg['id'] in ('prepare', 'commit'):
+                delay = self.consensus.validate_block()
+                yield self.env.timeout(delay)
+            # Perform transaction validation before sending
+            # For Ethereum:
+            if msg['id'] == 'transactions':
+                for tx in msg['transactions']:
+                    delay = self.consensus.validate_transaction()
+                    yield self.env.timeout(delay)
+            # For Bitcoin:
+            if msg['id'] == 'tx':
+                delay = self.consensus.validate_transaction()
+                yield self.env.timeout(delay)
+
             # Monitor the transaction propagation on Ethereum
             if msg['id'] == 'transactions':
                 txs = {}
