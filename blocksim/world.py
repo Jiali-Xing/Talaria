@@ -34,7 +34,7 @@ class SimulationWorld:
                  measured_throughput_received,
                  measured_throughput_sent,
                  measured_delays,
-                 day: int):
+                 day: int=0):
         self._measured_delays = self._read_json_file(measured_delays)
         self._sim_duration = sim_duration
         self._initial_time = initial_time

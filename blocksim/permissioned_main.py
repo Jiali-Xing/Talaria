@@ -38,12 +38,12 @@ def report_node_chain(world, nodes_list):
 
 def run_model(json_file='tx_count_10000.json'):
     now = int(time.time())  # Current time
-    duration = 36000  # seconds
+    duration = 3600  # seconds
 
     world = SimulationWorld(
         duration,
         now,
-        Path.cwd() / 'dlasc-input-parameters' / 'config.json',
+        Path.cwd() / 'dlasc-input-parameters' / 'config_poa.json',
         Path.cwd() / 'dlasc-input-parameters' / 'latency.json',
         Path.cwd() / 'dlasc-input-parameters' / 'throughput-received.json',
         Path.cwd() / 'dlasc-input-parameters' / 'throughput-sent.json',
@@ -84,7 +84,7 @@ def run_model(json_file='tx_count_10000.json'):
         node.connect(nodes_list)
 
     transaction_factory = TransactionFactory(world)
-    transaction_factory.broadcast(json_file, 15, nodes_list)
+    transaction_factory.broadcast(json_file, 5, nodes_list)
 
     world.start_simulation()
     report_node_chain(world, nodes_list)
@@ -101,10 +101,10 @@ if __name__ == '__main__':
     if not main_folder.exists():
         raise Exception('Wrong working dir. Should be blocksim-dlasc')
 
-    for i in range(1, 11):
+    for i in range(10, 11):
         json_file = 'tx_count_' + str(i) + '000.json'
 
-        trials = 30
+        trials = 1
         time_record = []
         sim_time_record = []
 
