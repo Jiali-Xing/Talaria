@@ -76,7 +76,7 @@ def run_model(json_file='tx_count_100.json', day=1):
             node.restore_chains(day-1)
 
     transaction_factory = TransactionFactory(world)
-    transaction_factory.broadcast(json_file, 6, nodes_list)
+    transaction_factory.broadcast(json_file, 0.01, nodes_list)
 
     world.start_simulation()
     report_node_chain(world, nodes_list)
@@ -98,11 +98,11 @@ if __name__ == '__main__':
         os.chdir(Path.parent)
         raise Exception('Wrong working dir. Should be blocksim-dlasc')
 
-    # for i in range(1, 11):
-    for i in [10]:
+    for i in range(1, 11):
+    # for i in [1]:
         json_file = 'tx_count_' + str(i) + '000.json'
         # json_file = 'tx_count_1.json'
-        
+
         trials = 1
         time_record = []
         sim_time_record = []
@@ -115,12 +115,12 @@ if __name__ == '__main__':
             running_time = time.time() - start_time
             time_record.append(running_time)
 
-        # path = Path.cwd() / 'blocksim' / 'output' / ('PBFT_simulated_time_' + json_file)
-        # with open(path, 'w') as f:
-        #     json.dump(sim_time_record, f, indent=2)
-        # path = Path.cwd() / 'blocksim' / 'output' / ('PBFT_running_time_' + json_file)
-        # with open(path, 'w') as f:
-        #     json.dump(time_record, f, indent=2)
+        path = Path.cwd() / 'blocksim' / 'output' / ('faulty_PBFT_simulated_time_' + json_file)
+        with open(path, 'w') as f:
+            json.dump(sim_time_record, f, indent=2)
+        path = Path.cwd() / 'blocksim' / 'output' / ('faulty_PBFT_running_time_' + json_file)
+        with open(path, 'w') as f:
+            json.dump(time_record, f, indent=2)
 
     # ave_time = np.average(np.array(time_record))
     # sim_ave_time = np.average(np.array(sim_time_record))

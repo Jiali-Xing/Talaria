@@ -53,7 +53,7 @@ class PBFTNode(Node):
             self.env.process(self._checkpointing())  # When node is initialized, periodically check if a checkpoint should be taken
             
         if self.is_malicious == MaliciousModel.PASSIVE:
-            self.drop_probability = 0.999
+            self.drop_probability = 0.4
         
         self._handshaking = env.event()
         self.replica_id = replica_id
@@ -75,7 +75,7 @@ class PBFTNode(Node):
 
         # Ryan: We want to model node failures and view changes...
         self.timedout = False  # Indicate if a node has timed out
-        self.timeoutVal = 30  # Some numerical time value for a timeout here
+        self.timeoutVal = 3  # Some numerical time value for a timeout here
         self.failure = False  # Indicate if a node is down or will somehow act Byzantine
         # self.prevLog = {}  # Keep track of previous log state so node can detect changes to it
         self.currSeqno = 0
@@ -322,7 +322,7 @@ class PBFTNode(Node):
 
     def _receive_commit(self, envelope):
         # yield self.env.timeout(self.network.validation_delay)
-        """Handle block bodies received
+        """Handle block bodies receive   d
         Assemble the block header in a temporary list with the block body received and
         insert it in the blockchain"""
         if not self.validate_message_digest(envelope.msg):
@@ -339,6 +339,7 @@ class PBFTNode(Node):
             # Note from Ryan - Is this just at the end of the sim? If so, this could make sense...
             if self.log['block'][seqno]:
                 new_block = self.log['block'][seqno]
+                # if self._is_primary():
                 client_reply = self.network_message.client_reply(new_block)
                 self.env.process(self.broadcast_to_non_authorities(client_reply))
                 self.chain.add_block(new_block)

@@ -1,7 +1,7 @@
 import json
 import string
 from pathlib import Path
-from random import choices, randint
+from random import choices, randint, random
 import simpy
 import numpy as np
 from blocksim.utils import time
@@ -28,7 +28,7 @@ class TransactionFactory:
         if not path.exists():
             raise Exception('Wrong working dir. Should be blocksim-dlasc')
 
-        all_days = False
+        all_days = True
         with path.open() as f:
             all_days_tx = json.load(f)
             if all_days:
@@ -37,10 +37,11 @@ class TransactionFactory:
                 # Thus I decide to use all tx from 180 days
                 # '''
                 node_tx = []
-                # This part sums all tx of 180 days, to make tx larger...
+                # This part sums tx every ten days, e.g., 10, 20, 30 etc., to make tx larger...
                 for key, value in all_days_tx.items():
-                    node_tx.append(all_days_tx[key][1:])
-                    node_tx_array = np.array(node_tx)
+                    if int(key[-2:-1]) < 1:
+                        node_tx.append(all_days_tx[key][1:])
+                node_tx_array = np.array(node_tx)
                 # '''
                 sum_tx = np.sum(node_tx_array, axis=0)
             else:

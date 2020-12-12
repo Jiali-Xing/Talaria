@@ -6,11 +6,11 @@
     },
     "block_validation": {
       "name": "gamma",
-      "parameters": "(1.6070683333919673 0.00822270357831179 0.06433748926113247)"
+      "parameters": "(1.6070683333919673, 0.00822270357831179, 0.06433748926113247)"
     },
     "time_between_blocks_seconds": {
       "name": "norm",
-      "parameters": "(15.79712454, 3.00835585)"
+      "parameters": "(1, 0.1)"
     }
   },
   "poa": {
