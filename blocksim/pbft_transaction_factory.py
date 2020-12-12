@@ -34,11 +34,12 @@ class TransactionFactory:
             if all_days:
                 today = 'All Days'
                 # only one day's tx is too little...
-                # Thus I decide to use all tx from 180 days
+                # Thus I decide to use all tx from 180 days,
+                # but that turns out to be too much, so I add only every ten days
                 # '''
                 node_tx = []
-                # This part sums tx every ten days, e.g., 10, 20, 30 etc., to make tx larger...
                 for key, value in all_days_tx.items():
+                    # This part sums tx every ten days, e.g., 10, 20, 30 etc., to make tx larger, but not too large
                     if int(key[-2:-1]) < 1:
                         node_tx.append(all_days_tx[key][1:])
                 node_tx_array = np.array(node_tx)
