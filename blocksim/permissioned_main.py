@@ -84,7 +84,7 @@ def run_model(json_file='tx_count_10000.json'):
         node.connect(nodes_list)
 
     transaction_factory = TransactionFactory(world)
-    transaction_factory.broadcast(json_file, 5, nodes_list)
+    transaction_factory.broadcast(json_file, .1, nodes_list)
 
     world.start_simulation()
     report_node_chain(world, nodes_list)
@@ -101,7 +101,7 @@ if __name__ == '__main__':
     if not main_folder.exists():
         raise Exception('Wrong working dir. Should be blocksim-dlasc')
 
-    for i in range(10, 11):
+    for i in range(3, 4):
         json_file = 'tx_count_' + str(i) + '000.json'
 
         trials = 1

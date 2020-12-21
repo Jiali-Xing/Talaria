@@ -1,4 +1,5 @@
 import simpy
+import numpy as np
 from datetime import datetime
 from simpy import Store
 from blocksim.utils import get_random_values, time, get_latency_delay
@@ -52,31 +53,43 @@ class Network:
         probability of the node being chosen.
         """
         self._init_lists()
-        tx_left = True
-        while tx_left:
-            time_between_blocks = round(get_random_values(
-                self.env.delays['time_between_blocks_seconds'])[0], 2)
-            yield self.env.timeout(time_between_blocks)
+        empty_block = 0
+        # Jiali: Simulate PoET or not
+        PoET = True
+        while True:
+            if PoET:
+                # exponential_rv = []
+                exponential_param = {
+                    "name": "expon",
+                    "parameters": "(0, 10)"
+                }
+                # for authority in self._list_authority_nodes:
+                time_between_blocks = get_random_values(exponential_param, len(self._list_authority_nodes))
+                yield self.env.timeout(np.min(time_between_blocks))
 
-            '''orphan_blocks_probability = self.env.config[self.blockchain]['orphan_blocks_probability']
-            simulate_orphan_blocks = scipy.random.choice(
-                [True, False], 1, p=[orphan_blocks_probability, 1-orphan_blocks_probability])[0]
-            if simulate_orphan_blocks:
-                selected_nodes = scipy.random.choice(
-                    self._list_nodes, 2, replace=False, p=self._list_probabilities)
-                for selected_node in selected_nodes:
-                    self._build_new_block(selected_node)
+                selected_node = self._list_authority_nodes[np.argmin(time_between_blocks)]
+                print('If the signer is in-turn, wait for the exact time to arrive, ' +
+                      'sign and broadcast immediately, at %d' % self.env.now)
+                tx_left = self._build_new_block(selected_node)
             else:
-                selected_node = scipy.random.choice(
-                    self._list_nodes, 1, replace=False, p=self._list_probabilities)[0]
-                self._build_new_block(selected_node)'''
+                time_between_blocks = round(get_random_values(
+                    self.env.delays['time_between_blocks_seconds'])[0], 2)
+                yield self.env.timeout(time_between_blocks)
 
-            # Ryan: Implement new block selection process here
-            selected_node = self._list_authority_nodes[self.authority_index % len(self._list_authority_nodes)]
-            print('If the signer is in-turn, wait for the exact time to arrive, ' +
-                  'sign and broadcast immediately, at %d' % self.env.now)
-            tx_left = self._build_new_block(selected_node)
-            self.authority_index = self.authority_index + 1
+                # Ryan: Implement new block selection process here
+                selected_node = self._list_authority_nodes[self.authority_index % len(self._list_authority_nodes)]
+                print('If the signer is in-turn, wait for the exact time to arrive, ' +
+                      'sign and broadcast immediately, at %d' % self.env.now)
+                tx_left = self._build_new_block(selected_node)
+                self.authority_index = self.authority_index + 1
+
+            # If we have seven consecutive empty block, stop.
+            if not tx_left:
+                empty_block += 1
+                if empty_block >= 4:
+                    break
+            else:
+                empty_block = 0
 
             if self.out_of_turn_block:
                 # Jiali: Assume there are n number of authorities able to propose block
