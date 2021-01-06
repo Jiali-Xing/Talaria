@@ -10,7 +10,7 @@
     },
     "time_between_blocks_seconds": {
       "name": "norm",
-      "parameters": "(0.1, 0.001)"
+      "parameters": "(0.001, 0.0001)"
     }
   },
   "poa": {

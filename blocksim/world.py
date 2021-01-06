@@ -5,27 +5,6 @@ from schema import Schema, SchemaError
 
 
 class SimulationWorld:
-    """The world starts here. It sets the simulation world.
-
-    The simulation world can be configured with the following characteristics:
-
-    :param int sim_duration: duration of the simulation
-    :param str blockchain: the type of blockchain being simulated (e.g. bitcoin or ethereum)
-    :param dict time_between_block_distribution: Probability distribution to represent the time between blocks
-    :param dict validate_tx_distribution: Probability distribution to represent the transaction validation delay
-    :param dict validate_block_distribution: Probability distribution to represent the block validation delay
-
-    Each distribution is represented as dictionary, with the following schema:
-    ``{ 'name': str, 'parameters': tuple }``
-
-    We use SciPy to work with probability distributions.
-
-    You can see a complete list of distributions here:
-    https://docs.scipy.org/doc/scipy/reference/stats.html
-
-    You can use the ``scripts/test-fit-distribution.py`` to find a good distribution and its parameters which fits your input data measured.
-    """
-
     def __init__(self,
                  sim_duration: int,
                  initial_time: int,
@@ -57,6 +36,7 @@ class SimulationWorld:
             'created_transactions': 0,
             'tx_propagation': {},
             'block_propagation': {},
+            'international_transactions': 0,
             # Jiali: add day to record the day from which the tx are imported.
             'day': 'DAY ' + str(day) + ' '
         }

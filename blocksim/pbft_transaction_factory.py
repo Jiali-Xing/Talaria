@@ -49,6 +49,12 @@ class TransactionFactory:
                 today = self._world.env.data['day']
                 sum_tx = all_days_tx[today][1:]
 
+        # Jiali: Here we implement the paired transaction dictionary to count international tx.
+        paired = True
+        dict_path = Path.cwd() / 'DLASC' / 'simulator-master' / 'src' / 'tx_dict.json'
+        with dict_path.open() as df:
+            paired_tx = json.load(df)
+
         blockchain_switcher = {
             'poa': self._generate_poa_tx,
             'pbft': self._generate_pbft_tx,
@@ -56,17 +62,38 @@ class TransactionFactory:
             'ethereum': self._generate_ethereum_tx
         }
 
-        for i in range(min(len(nodes_list), len(sum_tx))):
-            transactions = []
-            for _i in range(sum_tx[i]):
-                # Generate a random string to a transaction be distinct from others
-                # rand_sign = ''.join(
-                #     choices(string.ascii_letters + string.digits, k=20))
-                sign = '- '.join([today, nodes_list[i].address, str(_i), str(self._world.env.data['created_transactions'])])
-                tx = blockchain_switcher.get(self._world.blockchain, lambda: "Invalid blockchain")(sign, i)
-                transactions.append(tx)
+        if paired:
+            international_tx = 0
+            for sender in paired_tx.keys():
+                transactions = []
+                for j in paired_tx[sender].keys():
+                    n_tx = paired_tx[sender][j]
+                    i = int(sender)
+                    j = int(j)
+                    j = min(j, len(nodes_list)-1)
+                    for _i in range(n_tx):
+                        sign = '-'.join([nodes_list[i].address, nodes_list[j].address, str(_i)])
+                        tx = blockchain_switcher.get(self._world.blockchain, lambda: "Invalid blockchain")(sign, i)
+                        transactions.append(tx)
 
-            self._world.env.process(self._set_interval(nodes_list[i], transactions, interval*i))
+                    if nodes_list[i].address[7] != nodes_list[j].address[7]:
+                        self._world.env.data['international_transactions'] += n_tx
+
+                self._world.env.process(self._set_interval(nodes_list[i], transactions, interval*i))
+        else:
+            for i in range(min(len(nodes_list), len(sum_tx))):
+                transactions = []
+                for _i in range(sum_tx[i]):
+                    # Generate a random string to a transaction be distinct from others
+                    # rand_sign = ''.join(
+                    #     choices(string.ascii_letters + string.digits, k=20))
+                    sign = '- '.join(
+                        [today, nodes_list[i].address, str(_i), str(self._world.env.data['created_transactions'])])
+
+                    tx = blockchain_switcher.get(self._world.blockchain, lambda: "Invalid blockchain")(sign, i)
+                    transactions.append(tx)
+
+                self._world.env.process(self._set_interval(nodes_list[i], transactions, interval * i))
 
     def _set_interval(self, node, tx, interval):
         event = simpy.events.Timeout(self._world.env, delay=interval, value=interval)

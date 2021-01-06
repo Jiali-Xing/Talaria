@@ -10,8 +10,8 @@ from blocksim.pbft_transaction_factory import TransactionFactory
 from blocksim.world import SimulationWorld
 
 
-def write_report(world):
-    path = Path.cwd() / 'blocksim' / 'output' / 'report.json'
+def write_report(world, prefix=''):
+    path = Path.cwd() / 'blocksim' / 'output' / (prefix + '_' + 'report.json')
     
     with open(path, 'w') as f:
         json.dump(world.env.data, f, indent=2)
@@ -40,7 +40,7 @@ def run_model(json_file='tx_count_100.json', day=1):
         run_model(json_file, day-1)
 
     now = int(time.time())  # Current time
-    duration = 3600  # seconds
+    duration = 1  # seconds
 
     world = SimulationWorld(
         duration,
@@ -76,11 +76,11 @@ def run_model(json_file='tx_count_100.json', day=1):
             node.restore_chains(day-1)
 
     transaction_factory = TransactionFactory(world)
-    transaction_factory.broadcast(json_file, 0.01, nodes_list)
+    transaction_factory.broadcast(json_file, 0.00001, nodes_list)
 
     world.start_simulation()
     report_node_chain(world, nodes_list)
-    write_report(world)
+    write_report(world, '4_0.1')
 
     for node in nodes_list:
         node.save_chains(day)
@@ -99,7 +99,7 @@ if __name__ == '__main__':
         raise Exception('Wrong working dir. Should be blocksim-dlasc')
 
     # for i in range(1, 11):
-    for i in [9]:
+    for i in [3]:
         json_file = 'tx_count_' + str(i) + '000.json'
         # json_file = 'tx_count_1.json'
 
