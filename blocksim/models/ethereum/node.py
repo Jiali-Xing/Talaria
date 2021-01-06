@@ -16,8 +16,10 @@ class ETHNode(Node):
                  location: str,
                  address: str,
                  hashrate=0,
-                 is_mining=False):
+                 is_mining=False,
+                 verbose=False):
         # Create the Ethereum genesis block and init the chain
+        self.verbose = verbose
         genesis = Block(BlockHeader())
         consensus = Consensus(env)
         chain = Chain(env, self, consensus, genesis, BaseDB())
@@ -59,8 +61,9 @@ class ETHNode(Node):
             txs_intrinsic_gas += pending_tx.startgas
         candidate_block = self._build_candidate_block(
             pending_txs, gas_limit_per_block, txs_intrinsic_gas)
-        print(
-            f'{self.address} at {time(self.env)}: New candidate block #{candidate_block.header.number} created {candidate_block.header.hash[:8]} with difficulty {candidate_block.header.difficulty}')
+        if self.verbose:
+            print(
+                f'{self.address} at {time(self.env)}: New candidate block #{candidate_block.header.number} created {candidate_block.header.hash[:8]} with difficulty {candidate_block.header.difficulty}')
         # Add the candidate block to the chain of the miner node
         self.chain.add_block(candidate_block)
         # We need to broadcast the new candidate block across the network
@@ -114,13 +117,15 @@ class ETHNode(Node):
         head and genesis blocks
         This message should be sent after the initial handshake and prior to any ethereum related messages."""
         status_msg = self.network_message.status()
-        print(
-            f'{self.address} at {time(self.env)}: Status message sent to {destination_address}')
+        if self.verbose:
+            print(
+                f'{self.address} at {time(self.env)}: Status message sent to {destination_address}')
         self.env.process(self.send(destination_address, status_msg))
 
     def _receive_status(self, envelope):
-        print(
-            f'{self.address} at {time(self.env)}: Receive status from {envelope.origin.address}')
+        if self.verbose:
+            print(
+                f'{self.address} at {time(self.env)}: Receive status from {envelope.origin.address}')
         node = self.active_sessions.get(envelope.origin.address)
         node['status'] = envelope.msg
         self.active_sessions[envelope.origin.address] = node
@@ -140,15 +145,17 @@ class ETHNode(Node):
             for tx in transactions:
                 # Checks if the transaction was previous sent
                 if any({tx.hash} & node.get('knownTxs')):
-                    print(
-                        f'{self.address} at {time(self.env)}: Transaction {tx.hash[:8]} was already sent to {node_address}')
+                    if self.verbose:
+                        print(
+                            f'{self.address} at {time(self.env)}: Transaction {tx.hash[:8]} was already sent to {node_address}')
                     transactions.remove(tx)
                 else:
                     self._mark_transaction(tx.hash, node_address)
         # Only send if it has transactions
         if transactions:
-            print(
-                f'{self.address} at {time(self.env)}: {len(transactions)} transactions ready to be sent')
+            if self.verbose:
+                print(
+                    f'{self.address} at {time(self.env)}: {len(transactions)} transactions ready to be sent')
             transactions_msg = self.network_message.transactions(transactions)
             self.env.process(self.broadcast(transactions_msg))
 
@@ -183,7 +190,8 @@ class ETHNode(Node):
         ask for the header and body.
         If node is a miner, we need to interrupt the current candidate block mining process"""
         new_blocks = envelope.msg['new_blocks']
-        print(f'{self.address} at {time(self.env)}: New blocks received {new_blocks}')
+        if self.verbose:
+            print(f'{self.address} at {time(self.env)}: New blocks received {new_blocks}')
         # If the block is already known by a node, it does not need to request the block again
         block_numbers = []
         for block_hash, block_number in new_blocks.items():
@@ -212,8 +220,9 @@ class ETHNode(Node):
         for _block_hash in block_hashes:
             block_header = self.chain.get_block(_block_hash).header
             block_headers.append(block_header)
-        print(
-            f'{self.address} at {time(self.env)}: {len(block_headers)} Block header(s) preapred to send')
+            if self.verbose:
+                print(
+                    f'{self.address} at {time(self.env)}: {len(block_headers)} Block header(s) preapred to send')
         block_headers_msg = self.network_message.block_headers(block_headers)
         self.env.process(self.send(envelope.origin.address, block_headers_msg))
 
@@ -243,8 +252,9 @@ class ETHNode(Node):
         for block_hash in envelope.msg.get('hashes'):
             block = self.chain.get_block(block_hash)
             block_bodies[block.header.hash] = block.transactions
-        print(
-            f'{self.address} at {time(self.env)}: {len(block_bodies)} Block bodies(s) preapred to send')
+        if self.verbose:
+            print(
+                f'{self.address} at {time(self.env)}: {len(block_bodies)} Block bodies(s) preapred to send')
         block_bodies_msg = self.network_message.block_bodies(block_bodies)
         self.env.process(self.send(envelope.origin.address, block_bodies_msg))
 
@@ -261,5 +271,6 @@ class ETHNode(Node):
                 new_block = Block(header, block_txs)
                 if self.chain.add_block(new_block):
                     del self.temp_headers[block_hash]
-                    print(
-                        f'{self.address} at {time(self.env)}: Block assembled and added to the tip of the chain  {new_block.header}')
+                    if self.verbose:
+                        print(
+                            f'{self.address} at {time(self.env)}: Block assembled and added to the tip of the chain  {new_block.header}')

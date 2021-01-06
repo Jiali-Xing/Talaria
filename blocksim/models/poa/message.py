@@ -5,10 +5,11 @@ class Message:
     # Jiali: Copied from Ethereum
     # Defines a model for the network messages of the PoA blockchain.
 
-    def __init__(self, origin_node):
+    def __init__(self, origin_node, verbose=False):
         self.origin_node = origin_node
         _env = origin_node.env
         self._message_size = _env.config['poa']['message_size_kB']
+        self.verbose = verbose
 
     def status(self):
         """ Inform a peer of its current PoA state.
@@ -86,8 +87,9 @@ class Message:
             txsCount += len(block_txs)
         message_size = (
             txsCount * self._message_size['tx']) + self._message_size['block_bodies']
-        print(
-            f'block bodies with {txsCount} txs have a message size: {message_size} kB')
+        if self.verbose:
+            print(
+                f'block bodies with {txsCount} txs have a message size: {message_size} kB')
         return {
             'id': 'block_bodies',
             'block_bodies': block_bodies,

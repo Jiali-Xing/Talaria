@@ -24,8 +24,10 @@ class PBFTNode(Node):
                  address: str,
                  replica_id, 
                  is_authority=False,
-                 is_malicious=MaliciousModel.NOT_MALICIOUS
+                 is_malicious=MaliciousModel.NOT_MALICIOUS,
+                 verbose=False
                  ):
+        self.verbose = verbose
         # Jiali: This function is borrowed from ethereum/node.py, without any change actually.
         # Create the PBFT genesis block and init the chain
         genesis = Block(BlockHeader())
@@ -103,8 +105,9 @@ class PBFTNode(Node):
         tx_left = True
         for i in range(transactions_per_block * block_size):
             if self.transaction_queue.is_empty():
-                print(
-                    f'{self.address} at {time(self.env)}: No more transactions queued.')
+                if self.verbose:
+                    print(
+                        f'{self.address} at {time(self.env)}: No more transactions queued.')
                 # Jiali: stop simulation when tx are done, in order to know whether/when it happens
                 # raise Exception('TX all processed')
                 tx_left = False if i == 0 else True
@@ -112,8 +115,9 @@ class PBFTNode(Node):
             pending_tx = self.transaction_queue.get()
             pending_txs.append(pending_tx)
         candidate_block = self._build_candidate_block(pending_txs)
-        print(
-            f'{self.address} at {time(self.env)}: New candidate block #{candidate_block.header.number} created {candidate_block.header.hash[:8]} with difficulty {candidate_block.header.difficulty}')
+        if self.verbose:
+            print(
+                f'{self.address} at {time(self.env)}: New candidate block #{candidate_block.header.number} created {candidate_block.header.hash[:8]} with difficulty {candidate_block.header.difficulty}')
         # Add the candidate block to the chain of the authority node
         # Jiali: maybe leader should wait for commit before she add her block to her chain!
         # self.chain.add_block(candidate_block)
@@ -186,13 +190,15 @@ class PBFTNode(Node):
         head and genesis blocks
         This message should be sent after the initial handshake and prior to any ethereum related messages."""
         status_msg = self.network_message.status()
-        print(
-            f'{self.address} at {time(self.env)}: Status message sent to {destination_address}')
+        if self.verbose:
+            print(
+                f'{self.address} at {time(self.env)}: Status message sent to {destination_address}')
         self.env.process(self.send(destination_address, status_msg))
 
     def _receive_status(self, envelope):
-        print(
-            f'{self.address} at {time(self.env)}: Receive status from {envelope.origin.address}')
+        if self.verbose:
+            print(
+                f'{self.address} at {time(self.env)}: Receive status from {envelope.origin.address}')
         node = self.active_sessions.get(envelope.origin.address)
         node['status'] = envelope.msg
         self.active_sessions[envelope.origin.address] = node
@@ -212,15 +218,17 @@ class PBFTNode(Node):
             for tx in transactions:
                 # Checks if the transaction was previous sent
                 if any({tx.hash} & node.get('knownTxs')):
-                    print(
-                        f'{self.address} at {time(self.env)}: Transaction {tx.hash[:8]} was already sent to {node_address}')
+                    if self.verbose:
+                        print(
+                            f'{self.address} at {time(self.env)}: Transaction {tx.hash[:8]} was already sent to {node_address}')
                     transactions.remove(tx)
                 else:
                     self._mark_transaction(tx.hash, node_address)
         # Only send if it has transactions
         if transactions:
-            print(
-                f'{self.address} at {time(self.env)}: {len(transactions)} transactions ready to be sent')
+            if self.verbose:
+                print(
+                    f'{self.address} at {time(self.env)}: {len(transactions)} transactions ready to be sent')
             transactions_msg = self.network_message.transactions(transactions)
             self.env.process(self.broadcast(transactions_msg))
 
@@ -272,8 +280,8 @@ class PBFTNode(Node):
             return  # Do nothing because it was a no-op preprepare from a view change
         new_blocks = envelope.msg['new_blocks']
         block_bodies = envelope.msg['block_bodies']
-
-        print(f'{self.address} at {time(self.env)}: In pre-prepare phase, new blocks received {new_blocks}')
+        if self.verbose:
+            print(f'{self.address} at {time(self.env)}: In pre-prepare phase, new blocks received {new_blocks}')
         # If the block is already known by a node, it does not need to prepare again.
         # block_numbers = []
         for block_hash, block_header in new_blocks.items():
@@ -281,21 +289,24 @@ class PBFTNode(Node):
             # Jiali: store the block in the log for future commit
             block = Block(block_header, block_bodies[block_hash])
             self.log['block'][seqno] = block
-            print( 'TIME IS ' + time(self.env))
+            if self.verbose:
+                print( 'TIME IS ' + time(self.env))
 
             if self.log['committed'][seqno] and self.chain.get_block(block_hash) is None:
                 new_block = self.log['block'][seqno]
                 self.chain.add_block(new_block)
-                print(
-                    f'{self.address} at {time(self.env)}: Block assembled and added to the top of the chain  {new_block.header}')
+                if self.verbose:
+                    print(
+                        f'{self.address} at {time(self.env)}: Block assembled and added to the top of the chain  {new_block.header}')
 
     def _send_prepare(self, envelop):
         # Send prepare
         # TODO: add attributes to prepare msg, a PREPARE should have <v, n, d, i>,
         #  where the seqno should be attached to block not per node! (so can not be self.seqno?)
         seqno = envelop.msg['seqno']
-        print(
-            f'{self.address} at {time(self.env)}: Prepare prepared to multicast.')
+        if self.verbose:
+            print(
+                f'{self.address} at {time(self.env)}: Prepare prepared to multicast.')
         prepare_msg = self.network_message.prepare(seqno)
         self.log['prepare'][seqno].add(self.address)
         self.env.process(self.broadcast_to_authorities(prepare_msg))
@@ -344,7 +355,8 @@ class PBFTNode(Node):
                 client_reply = self.network_message.client_reply(new_block)
                 self.env.process(self.broadcast_to_non_authorities(client_reply))
                 self.chain.add_block(new_block)
-                print(f'{self.address} at {time(self.env)}: Block assembled and added to the tip of the chain  {new_block.header}')
+                if self.verbose:
+                    print(f'{self.address} at {time(self.env)}: Block assembled and added to the tip of the chain  {new_block.header}')
 
     # How non-authority nodes handle the receipt of a reply message from an authority
     def _receive_reply(self, envelope):

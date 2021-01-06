@@ -16,8 +16,10 @@ class BTCNode(Node):
                  location: str,
                  address: str,
                  hashrate=0,
-                 is_mining=False):
+                 is_mining=False,
+                 verbose=False):
         # Create the Bitcoin genesis block and init the chain
+        self.verbose = verbose
         genesis = Block(BlockHeader())
         consensus = Consensus(env)
         chain = Chain(env, self, consensus, genesis, BaseDB())
@@ -63,8 +65,9 @@ class BTCNode(Node):
             pending_tx = self.transaction_queue.get()
             pending_txs.append(pending_tx)
         candidate_block = self._build_candidate_block(pending_txs)
-        print(
-            f'{self.address} at {time(self.env)}: New candidate block #{candidate_block.header.number} created {candidate_block.header.hash[:8]} with difficulty {candidate_block.header.difficulty}')
+        if self.verbose:
+            print(
+                f'{self.address} at {time(self.env)}: New candidate block #{candidate_block.header.number} created {candidate_block.header.hash[:8]} with difficulty {candidate_block.header.difficulty}')
         # Add the candidate block to the chain of the miner node
         self.chain.add_block(candidate_block)
         # We need to broadcast the new candidate block across the network
@@ -121,8 +124,9 @@ class BTCNode(Node):
         """When a node creates an outgoing connection, it will immediately advertise its version"""
         if destination_address not in self._know_version:
             version_msg = self.network_message.version()
-            print(
-                f'{self.address} at {time(self.env)}: Version message sent to {destination_address}')
+            if self.verbose:
+                print(
+                    f'{self.address} at {time(self.env)}: Version message sent to {destination_address}')
             self._know_version.append(destination_address)
             self.env.process(self.send(destination_address, version_msg))
 
@@ -131,17 +135,20 @@ class BTCNode(Node):
         acceptance of the version. It also send his version to the destination, only if it
         was not send previously."""
         verack_msg = self.network_message.verack()
-        print(
-            f'{self.address} at {time(self.env)}: Version message received from {envelope.origin.address} and verack sent')
+        if self.verbose:
+            print(
+                f'{self.address} at {time(self.env)}: Version message received from {envelope.origin.address} and verack sent')
         self.env.process(self.send(envelope.origin.address, verack_msg))
-        print(f'{self.address} at {time(self.env)}: Send the response version to {envelope.origin.address}')
+        if self.verbose:
+            print(f'{self.address} at {time(self.env)}: Send the response version to {envelope.origin.address}')
         self._send_version(envelope.origin.address)
 
     def _receive_verack(self, envelope):
         self._handshaking.succeed()
         self._handshaking = self.env.event()
-        print(
-            f'{self.address} at {time(self.env)}: Receive ACK from {envelope.origin.address}')
+        if self.verbose:
+            print(
+                f'{self.address} at {time(self.env)}: Receive ACK from {envelope.origin.address}')
 
     ##              ##
     ## Transactions ##
@@ -165,15 +172,17 @@ class BTCNode(Node):
                 self.temp_txs[tx.hash] = tx
                 # Checks if the transaction was previous sent
                 if any({tx.hash} & node.get('knownTxs')):
-                    print(
-                        f'{self.address} at {time(self.env)}: Transaction {tx.hash[:8]} was already sent to {node_address}')
+                    if self.verbose:
+                        print(
+                            f'{self.address} at {time(self.env)}: Transaction {tx.hash[:8]} was already sent to {node_address}')
                 else:
                     self._mark_transaction(tx.hash, node_address)
                     transactions_hashes.append(tx.hash)
         # Only send if it has transactions hashes
         if transactions_hashes:
-            print(
-                f'{self.address} at {time(self.env)}: {len(transactions_hashes)} transaction(s) ready to be announced')
+            if self.verbose:
+                print(
+                    f'{self.address} at {time(self.env)}: {len(transactions_hashes)} transaction(s) ready to be announced')
             transactions_msg = self.network_message.inv(
                 transactions_hashes, 'tx')
             self.env.process(self.broadcast(transactions_msg))
@@ -187,8 +196,9 @@ class BTCNode(Node):
             if tx_hash in self.temp_txs:
                 tx = self.temp_txs[tx_hash]
                 del self.temp_txs[tx_hash]
-                print(
-                    f'{self.address} at {time(self.env)}: Full transaction {tx.hash[:8]} preapred to send')
+                if self.verbose:
+                    print(
+                        f'{self.address} at {time(self.env)}: Full transaction {tx.hash[:8]} preapred to send')
                 tx_msg = self.network_message.tx(tx)
                 self.env.process(self.send(envelope.origin.address, tx_msg))
 
@@ -226,8 +236,9 @@ class BTCNode(Node):
         The destination only receives the hash of the block, and then ask for the entire block
         by calling `getdata` netowork protocol message (https://bitcoin.org/en/developer-reference#getdata)."""
         new_blocks_hashes = envelope.msg.get('hashes')
-        print(
-            f'{self.address} at {time(self.env)}: {len(new_blocks_hashes)} new blocks announced by {envelope.origin.address}')
+        if self.verbose:
+            print(
+                f'{self.address} at {time(self.env)}: {len(new_blocks_hashes)} new blocks announced by {envelope.origin.address}')
         get_data_msg = self.network_message.get_data(
             new_blocks_hashes, 'block')
         self.env.process(
@@ -241,8 +252,9 @@ class BTCNode(Node):
         origin = envelope.origin.address
         for block_hash in envelope.msg['hashes']:
             block = self.chain.get_block(block_hash)
-            print(
-                f'{self.address} at {time(self.env)}: Block {block.header.hash[:8]} preapred to send to {origin}')
+            if self.verbose:
+                print(
+                    f'{self.address} at {time(self.env)}: Block {block.header.hash[:8]} preapred to send to {origin}')
             block_msg = self.network_message.block(block)
             self.env.process(self.send(origin, block_msg))
 
@@ -252,8 +264,10 @@ class BTCNode(Node):
         block = envelope.msg['block']
         is_added = self.chain.add_block(block)
         if is_added:
-            print(
-                f'{self.address} at {time(self.env)}: Block assembled and added to the tip of the chain {block.header}')
+            if self.verbose:
+                print(
+                    f'{self.address} at {time(self.env)}: Block assembled and added to the tip of the chain {block.header}')
         else:
-            print(
-                f'{self.address} at {time(self.env)}: Block NOT added to the chain {block.header}')
+            if self.verbose:
+                print(
+                    f'{self.address} at {time(self.env)}: Block NOT added to the chain {block.header}')

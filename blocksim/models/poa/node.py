@@ -17,9 +17,11 @@ class POANode(Node):
                  location: str,
                  address: str,
                  # hashrate=0,
-                 is_authority=False):
+                 is_authority=False,
+                 verbose=False):
         # Jiali: This function is borrowed from ethereum/node.py, without any change actually.
         # Create the PoA genesis block and init the chain
+        self.verbose = verbose
         genesis = Block(BlockHeader())
         consensus = Consensus(env)
         chain = Chain(env, self, consensus, genesis, BaseDB())
@@ -55,8 +57,9 @@ class POANode(Node):
         tx_left = True
         for i in range(transactions_per_block * block_size):
             if self.transaction_queue.is_empty():
-                print(
-                    f'{self.address} at {time(self.env)}: No more transactions queued.')
+                if self.verbose:
+                    print(
+                        f'{self.address} at {time(self.env)}: No more transactions queued.')
                 # Jiali: stop simulation when tx are done, in order to know whether/when it happens
                 if i == 0:
                     tx_left = False
@@ -64,8 +67,9 @@ class POANode(Node):
             pending_tx = self.transaction_queue.get()
             pending_txs.append(pending_tx)
         candidate_block = self._build_candidate_block(pending_txs)
-        print(
-            f'{self.address} at {time(self.env)}: New candidate block #{candidate_block.header.number} created {candidate_block.header.hash[:8]} with difficulty {candidate_block.header.difficulty}')
+        if self.verbose:
+            print(
+                f'{self.address} at {time(self.env)}: New candidate block #{candidate_block.header.number} created {candidate_block.header.hash[:8]} with difficulty {candidate_block.header.difficulty}')
         # Add the candidate block to the chain of the authority node
         self.chain.add_block(candidate_block)
         # We need to broadcast the new candidate block across the network
@@ -120,13 +124,15 @@ class POANode(Node):
         head and genesis blocks
         This message should be sent after the initial handshake and prior to any ethereum related messages."""
         status_msg = self.network_message.status()
-        print(
-            f'{self.address} at {time(self.env)}: Status message sent to {destination_address}')
+        if self.verbose:
+            print(
+                f'{self.address} at {time(self.env)}: Status message sent to {destination_address}')
         self.env.process(self.send(destination_address, status_msg))
 
     def _receive_status(self, envelope):
-        print(
-            f'{self.address} at {time(self.env)}: Receive status from {envelope.origin.address}')
+        if self.verbose:
+            print(
+                f'{self.address} at {time(self.env)}: Receive status from {envelope.origin.address}')
         node = self.active_sessions.get(envelope.origin.address)
         node['status'] = envelope.msg
         self.active_sessions[envelope.origin.address] = node
@@ -146,15 +152,17 @@ class POANode(Node):
             for tx in transactions:
                 # Checks if the transaction was previous sent
                 if any({tx.hash} & node.get('knownTxs')):
-                    print(
-                        f'{self.address} at {time(self.env)}: Transaction {tx.hash[:8]} was already sent to {node_address}')
+                    if self.verbose:
+                        print(
+                            f'{self.address} at {time(self.env)}: Transaction {tx.hash[:8]} was already sent to {node_address}')
                     transactions.remove(tx)
                 else:
                     self._mark_transaction(tx.hash, node_address)
         # Only send if it has transactions
         if transactions:
-            print(
-                f'{self.address} at {time(self.env)}: {len(transactions)} transactions ready to be sent')
+            if self.verbose:
+                print(
+                    f'{self.address} at {time(self.env)}: {len(transactions)} transactions ready to be sent')
             transactions_msg = self.network_message.transactions(transactions)
             # Jiali: I think node should also add tx to their own queue before they broadcast the txs
             if self.is_authority:
@@ -192,7 +200,8 @@ class POANode(Node):
         ask for the header and body.
         If node is a authority, we need to interrupt the current candidate block mining process"""
         new_blocks = envelope.msg['new_blocks']
-        print(f'{self.address} at {time(self.env)}: New blocks received {new_blocks}')
+        if self.verbose:
+            print(f'{self.address} at {time(self.env)}: New blocks received {new_blocks}')
         # If the block is already known by a node, it does not need to request the block again
         block_numbers = []
         for block_hash, block_number in new_blocks.items():
@@ -221,8 +230,9 @@ class POANode(Node):
         for _block_hash in block_hashes:
             block_header = self.chain.get_block(_block_hash).header
             block_headers.append(block_header)
-        print(
-            f'{self.address} at {time(self.env)}: {len(block_headers)} Block header(s) preapred to send')
+        if self.verbose:
+            print(
+                f'{self.address} at {time(self.env)}: {len(block_headers)} Block header(s) preapred to send')
         block_headers_msg = self.network_message.block_headers(block_headers)
         self.env.process(self.send(envelope.origin.address, block_headers_msg))
 
@@ -252,8 +262,9 @@ class POANode(Node):
         for block_hash in envelope.msg.get('hashes'):
             block = self.chain.get_block(block_hash)
             block_bodies[block.header.hash] = block.transactions
-        print(
-            f'{self.address} at {time(self.env)}: {len(block_bodies)} Block bodies(s) preapred to send')
+        if self.verbose:
+            print(
+                f'{self.address} at {time(self.env)}: {len(block_bodies)} Block bodies(s) preapred to send')
         block_bodies_msg = self.network_message.block_bodies(block_bodies)
         self.env.process(self.send(envelope.origin.address, block_bodies_msg))
 
@@ -274,5 +285,6 @@ class POANode(Node):
                         self.transaction_queue.remove_txs(block_txs)
 
                     del self.temp_headers[block_hash]
-                    print(
-                        f'{self.address} at {time(self.env)}: Block assembled and added to the tip of the chain  {new_block.header}')
+                    if self.verbose:
+                        print(
+                            f'{self.address} at {time(self.env)}: Block assembled and added to the tip of the chain  {new_block.header}')

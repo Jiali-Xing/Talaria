@@ -21,9 +21,10 @@ class TransactionFactory:
     def __init__(self, world):
         self._world = world
 
-    def broadcast(self, json_file_name, interval, nodes_list):
+    def broadcast(self, json_file_name, interval, nodes_list,verbose = False):
         # path = Path.cwd() / 'blocksim' / 'tx_count.json'
         # path = Path.cwd() / 'DLASC' / 'simulator-master' / 'src' / 'tx_count_UTC.json'
+        self.verbose = verbose
         path = Path.cwd() / 'DLASC' / 'simulator-master' / 'src' / json_file_name
         if not path.exists():
             raise Exception('Wrong working dir. Should be blocksim-dlasc')
@@ -100,7 +101,8 @@ class TransactionFactory:
         value = yield event
         self._world.env.process(
             node.broadcast_transactions(tx))
-        print(f'{time(self._world.env)}, now {value} seconds have passed')
+        if self.verbose:
+            print(f'{time(self._world.env)}, now {value} seconds have passed')
         self._world.env.data['created_transactions'] += len(tx)
         # yield self._world.env.timeout(interval)
 
