@@ -14,7 +14,8 @@ class MaliciousModel(Enum):
 
 
 class Network:
-    def __init__(self, env, name):
+    def __init__(self, env, name, verbose=False):
+        self.verbose = verbose
         self.env = env
         self.name = name
         self.blockchain = self.env.config['blockchain']
@@ -72,14 +73,15 @@ class Network:
             # Ryan: Implement new block selection process here (updated for PBFT 7/3!)
             # Bugfix: IndexError: list index out of range, bugfix done
             selected_node = self._list_authority_nodes[self.view % len(self._list_authority_nodes)]
-            print(f'If the signer is in-turn, wait for the exact time to arrive, sign and broadcast immediately, at {time(self.env)}.')
+            if self.verbose:
+                print(f'If the signer is in-turn, wait for the exact time to arrive, sign and broadcast immediately, at {time(self.env)}.')
 
             tx_left = self._build_new_block(selected_node)
 
             # If we have seven consecutive empty block, stop.
             if not tx_left:
                 empty_block += 1
-                if empty_block >= 10:
+                if empty_block >= 8:
                     break
             else:
                 empty_block = 0
@@ -95,7 +97,8 @@ class Network:
                     out_of_turn_authority.append(
                         self._list_authority_nodes[(self.view + leader) % len(self._list_authority_nodes)]
                     )
-                print('If the signer is out-of-turn, delay signing by rand(SIGNER_COUNT * 500ms)')
+                if self.verbose:
+                    print('If the signer is out-of-turn, delay signing by rand(SIGNER_COUNT * 500ms)')
                 for node in out_of_turn_authority:
                     self.env.process(self._delay_out_turn_signing(node, n))
 
@@ -127,7 +130,8 @@ class Network:
 
             # Ryan: Implement new block selection process here
             selected_node = self._list_authority_nodes[self.view % len(self._list_authority_nodes)]
-            print('If the signer is in-turn, wait for the exact time to arrive, ' +
+            if self.verbose:
+                print('If the signer is in-turn, wait for the exact time to arrive, ' +
                   'sign and broadcast immediately, at %d' % self.env.now)
             tx_left = self._build_new_block(selected_node)
             self.view = self.view + 1
@@ -151,7 +155,8 @@ class Network:
                     out_of_turn_authority.append(
                         self._list_authority_nodes[(self.view + leader) % len(self._list_authority_nodes)]
                     )
-                print('If the signer is out-of-turn, delay signing by rand(SIGNER_COUNT * 500ms)')
+                if self.verbose:
+                    print('If the signer is out-of-turn, delay signing by rand(SIGNER_COUNT * 500ms)')
                 for node in out_of_turn_authority:
                     self.env.process(self._delay_out_turn_signing(node, n))
 
@@ -169,11 +174,13 @@ class Network:
         out_turn_block_propose = simpy.events.Timeout(self.env, delay=delay, value=delay)
         delayed_time = yield out_turn_block_propose
         self._build_new_block(node)
-        print('now=%d, out-of-turn node %s proposes after delayed_time=%d' % (self.env.now, node, delayed_time))
+        if self.verbose:
+            print('now=%d, out-of-turn node %s proposes after delayed_time=%d' % (self.env.now, node, delayed_time))
 
     def _build_new_block(self, node):
-        print(
-            f'Network at {time(self.env)}: Node {node.address} selected to broadcast his candidate block')
+        if self.verbose:
+            print(
+                f'Network at {time(self.env)}: Node {node.address} selected to broadcast his candidate block')
         # Give orders to the selected node to broadcast his candidate block
         return node.build_new_block()
 
@@ -181,7 +188,8 @@ class Network:
 class Connection:
     """This class represents the propagation through a Connection."""
 
-    def __init__(self, env, origin_node, destination_node):
+    def __init__(self, env, origin_node, destination_node, verbose=False):
+        self.verbose = verbose
         self.env = env
         self.store = Store(env)
         self.origin_node = origin_node
@@ -194,8 +202,9 @@ class Connection:
         self.store.put(envelope)
 
     def put(self, envelope):
-        print(
-            f'{envelope.origin.address} at {envelope.timestamp}: Message (ID: {envelope.msg["id"]}) sent with {envelope.msg["size"]} MB with a destination: {envelope.destination.address}')
+        if self.verbose:
+            print(
+                f'{envelope.origin.address} at {envelope.timestamp}: Message (ID: {envelope.msg["id"]}) sent with {envelope.msg["size"]} MB with a destination: {envelope.destination.address}')
         self.env.process(self.latency(envelope))
 
     def get(self):

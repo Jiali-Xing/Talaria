@@ -21,7 +21,7 @@ class TransactionFactory:
     def __init__(self, world):
         self._world = world
 
-    def broadcast(self, json_file_name, interval, nodes_list,verbose = False):
+    def broadcast(self, json_file_name, interval, nodes_list, verbose=False):
         # path = Path.cwd() / 'blocksim' / 'tx_count.json'
         # path = Path.cwd() / 'DLASC' / 'simulator-master' / 'src' / 'tx_count_UTC.json'
         self.verbose = verbose
@@ -71,7 +71,7 @@ class TransactionFactory:
                     n_tx = paired_tx[sender][j]
                     i = int(sender)
                     j = int(j)
-                    j = min(j, len(nodes_list)-1)
+                    j = min(j, len(nodes_list) - 1)
                     for _i in range(n_tx):
                         sign = '-'.join([nodes_list[i].address, nodes_list[j].address, str(_i)])
                         tx = blockchain_switcher.get(self._world.blockchain, lambda: "Invalid blockchain")(sign, i)
@@ -80,7 +80,7 @@ class TransactionFactory:
                     if nodes_list[i].address[7] != nodes_list[j].address[7]:
                         self._world.env.data['international_transactions'] += n_tx
 
-                self._world.env.process(self._set_interval(nodes_list[i], transactions, interval*i))
+                self._world.env.process(self._set_interval(nodes_list[i], transactions, interval * i))
         else:
             for i in range(min(len(nodes_list), len(sum_tx))):
                 transactions = []

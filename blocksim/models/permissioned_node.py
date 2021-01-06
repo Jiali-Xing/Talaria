@@ -34,8 +34,10 @@ class Node:
                  address: str,
                  chain: Chain,
                  consensus: Consensus,
-                 is_authority: bool):
-        
+                 is_authority: bool,
+                 verbose=False):
+
+        self.verbose = verbose
         self.env = env
         self.network = network
         self.location = location
@@ -112,8 +114,9 @@ class Node:
         self.active_sessions[node_address] = node
 
     def _read_envelope(self, envelope):
-        print(
-            f'{self.address} at {time(self.env)}: Receive a message (ID: {envelope.msg["id"]}) created at {envelope.timestamp} from {envelope.origin.address}')
+        if self.verbose:
+            print(
+                f'{self.address} at {time(self.env)}: Receive a message (ID: {envelope.msg["id"]}) created at {envelope.timestamp} from {envelope.origin.address}')
 
     def listening_node(self, connection):
         while True:
@@ -293,7 +296,7 @@ class Node:
                 destination_node = connection.destination_node
 
                 # Monitor the transaction propagation on PBFT network
-                if msg['id'] == 'reply':
+                if msg['id'] == 'reply' and self.verbose:
                     print("Reply being sent to " + add)
 
                 upload_transmission_delay = get_sent_delay(

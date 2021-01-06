@@ -4,7 +4,8 @@ from blocksim.utils import get_random_values, time, get_latency_delay
 
 
 class Network:
-    def __init__(self, env, name):
+    def __init__(self, env, name, verbose=False):
+        self.verbose = verbose
         self.env = env
         self.name = name
         self.blockchain = self.env.config['blockchain']
@@ -62,8 +63,9 @@ class Network:
                 self._build_new_block(selected_node)
 
     def _build_new_block(self, node):
-        print(
-            f'Network at {time(self.env)}: Node {node.address} selected to broadcast his candidate block')
+        if self.verbose:
+            print(
+                f'Network at {time(self.env)}: Node {node.address} selected to broadcast his candidate block')
         # Give orders to the selected node to broadcast his candidate block
         node.build_new_block()
 
@@ -71,7 +73,8 @@ class Network:
 class Connection:
     """This class represents the propagation through a Connection."""
 
-    def __init__(self, env, origin_node, destination_node):
+    def __init__(self, env, origin_node, destination_node, verbose=False):
+        self.verbose = verbose
         self.env = env
         self.store = Store(env)
         self.origin_node = origin_node
@@ -84,8 +87,9 @@ class Connection:
         self.store.put(envelope)
 
     def put(self, envelope):
-        print(
-            f'{envelope.origin.address} at {envelope.timestamp}: Message (ID: {envelope.msg["id"]}) sent with {envelope.msg["size"]} MB with a destination: {envelope.destination.address}')
+        if self.verbose:
+            print(
+                f'{envelope.origin.address} at {envelope.timestamp}: Message (ID: {envelope.msg["id"]}) sent with {envelope.msg["size"]} MB with a destination: {envelope.destination.address}')
         self.env.process(self.latency(envelope))
 
     def get(self):
