@@ -41,8 +41,9 @@ class TransactionFactory:
                 node_tx = []
                 for key, value in all_days_tx.items():
                     # This part sums tx every ten days, e.g., 10, 20, 30 etc., to make tx larger, but not too large
-                    if int(key[-2:-1]) < 1:
-                        node_tx.append(all_days_tx[key][1:])
+                    node_tx.append(all_days_tx[key][1:])
+                    # if int(key[-2:-1]) < 9:
+                    #     pass
                 node_tx_array = np.array(node_tx)
                 # '''
                 sum_tx = np.sum(node_tx_array, axis=0)
@@ -51,7 +52,7 @@ class TransactionFactory:
                 sum_tx = all_days_tx[today][1:]
 
         # Jiali: Here we implement the paired transaction dictionary to count international tx.
-        paired = True
+        paired = False
         dict_path = Path.cwd() / 'DLASC' / 'simulator-master' / 'src' / 'tx_dict.json'
         with dict_path.open() as df:
             paired_tx = json.load(df)

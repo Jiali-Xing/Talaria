@@ -81,8 +81,8 @@ class Network:
             # If we have seven consecutive empty block, stop.
             if not tx_left:
                 empty_block += 1
-                if empty_block >= 8:
-                    break
+                # if empty_block >= 8:
+                #     break
             else:
                 empty_block = 0
 
