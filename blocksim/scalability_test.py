@@ -111,7 +111,33 @@ def plot_time(x):
     plt.close()
 
 
+def plot_faulty():
+    x = list(range(7))
+    nBlock = [99, 85, 67, 61, 56, 46, 36]
+    ncBlock = [99, 85, 67, 61, 56, 46, 4]
+    nfBlock = [6, 4, 5, 8, 5, 4]
+    fig = plt.figure()
+    plt.title("Throughput of 16 pBFT Nodes versus Faulty Nodes")
+    plt.ylabel('Average Number of Blocks in 100 Seconds')
+    plt.xlabel('Number of Faulty Nodes (Whose 50% messages are dropped)')
+    plt.plot(x[1::], nfBlock,
+             label='Nubmer of Blocks of Faulty Nodes')
+    plt.plot(x, nBlock,
+             label='Nubmer of Blocks of Authorities')
+    plt.plot(x, ncBlock,
+             label='Nubmer of Blocks of Non-Authorities')
+    plt.axvline(x=5.5, color='k', linestyle='--', label='Boundary of Consistency (f=5)')
+    # plt.text(x[-1], ncBlock[-1] + 1, "%d" % ncBlock[-1], ha="center")
+    for i in range(1, len(x)):
+        plt.text(x[i], nfBlock[i-1]+1, "%d" % nfBlock[i-1], ha="center")
+    for i in range(len(x)):
+        plt.text(x[i], nBlock[i]+1, "%d" % nBlock[i], ha="center")
+    plt.legend(loc='best')
+    plt.show()
+
+
 if __name__ == '__main__':
-    x = get_tx_num()
-    print(len(x))
-    plot_time(x)
+    # x = get_tx_num()
+    # print(len(x))
+    # plot_time(x)
+    plot_faulty()

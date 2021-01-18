@@ -37,7 +37,7 @@ class NodeFactory:
 
     def create_poa_nodes(self, miners, non_miners):
         # Jiali: miners/non_miners are set by csv instead, so no need to provide above!
-        path = Path.cwd() / 'blocksim' / 'Test_DLA2_Input.csv'
+        path = Path.cwd() / 'blocksim' / 'Test_DLA1_Input.csv'
         if not path.exists():
             raise Exception('Wrong working dir. Should be blocksim-dlasc')
         with path.open('r') as infile:
@@ -118,7 +118,7 @@ class NodeFactory:
                 nodes_list.append(new)
             replica_id = replica_id + 1
             
-        print(f'NodeFactory: Created {len(nodes_list)} PoA nodes')
+        print(f'NodeFactory: Created {len(nodes_list)} pBFT nodes')
         return nodes_list
 
     def create_bitcoin_nodes(self, miners, non_miners):
