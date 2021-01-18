@@ -1,1 +1,36 @@
-# blocksim-dlasc
+# PermBlockSim
+
+PermBlockSim is a novel permissioned blockchain simulator based on open source blockchain simulator [BlockSim](https://github.com/carlosfaria94/blocksim). We significantly extend the capability of BlockSim, to support permissioned blockchains. To the best of our knowledge, PermBlockSim is the first blockchain simulator designed for simulating private blockchain models. 
+
+Presently, a simplified version of Proof-of-Authority and the complete pBFT consensus protocols are implemented. Other permissioned protocols such as PoET can easily be included into our flexible modeling framework. Moreover, our new blockchain simulator handles  different types of faulty authorities and a variable number of transactions generated per day at every node. These features make our PermBlockSim ideal for testing and simulating protocols for a range of use cases including the challenging setting of supply chain management. We also demonstrate its application on a supply chain management example that utilizes the practical Byzantine Fault Tolerance (pBFT) protocol. 
+
+Protocols Out-of-box:
+ - Simplified PoA
+ - pBFT
+ - PoET
+
+Other features are also included for convenience:
+ - Simulating for certain time duration v.s. until finish certain amount of transactions.
+ - Counting inter-regional transactions.
+ - Multiple (days') simulation using the same chain.
+ - Switching output on and off
+ 
+---
+
+## Installation 
+
+I suggest that you use conda:
+```
+conda env create -f permblocksim.yml
+```
+
+## Running 
+```
+cd ./perm-blocksim
+
+conda activate permblocksim
+export PYTHONPATH='.'
+
+python ./blocksim/pbft_main.py
+```
+This runs the pBFT protocol as default.
