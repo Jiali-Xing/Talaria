@@ -34,3 +34,9 @@ export PYTHONPATH='.'
 python ./blocksim/pbft_main.py
 ```
 This runs the pBFT protocol as default.
+
+---
+# Acknowledgment
+
+This material is based on work supported by the Defense Advanced Research Projects Agency (DARPA) and Space and Naval Warfare Systems Center, Pacific (SSC Pacific) under contract number N6600118C4031.
+
