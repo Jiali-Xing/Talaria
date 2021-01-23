@@ -17,6 +17,34 @@ Other features are also included for convenience:
  
 ---
 
+## Overview
+There are several important classes that are needed by the simulator. There is needed a main file, a transaction factory, and a node factory, as well as a variety of configuration and parameter files. Each is described below in detail.
+
+## main.py
+This function takes in a json file with the number of transactions for each node on each day, and uses imported per protocol transaction and node factories, as well as per protocol network files to create the simulation world. This function also relies on the following files: config.json, latency.json, throughput_received.json, throughput_sent.json, delays.json. This function will also call the network's start_heartbeat, and run the simulation using the world's start_simulation function.
+
+## config.json
+This file includes parameters such as the number of transactions per block, block size limit, and the max size of each block.
+
+## latency.json
+This file includes the latency distributions from each location to each other location. There are some researches in literature which can help find these distributions for a specific use case (TODO: insert link to relevant resources/papers here)
+
+## throughput_received.json
+For each location, this file includes outgoing throughput distributions and parameters to every other location.
+
+## throughput_sent.json
+For each location, this file includes incoming throughput distributions and parameters to every other location.
+
+## delays.json
+This file includes distribution specifications for a variety of other delays that may occur. For example, the distributions for the transaction validation time, the block validation time, and the time between blocks. 
+
+## Transaction Factory
+
+## Node Factory
+
+## Network
+
+
 ## Installation 
 
 I suggest that you use conda:
