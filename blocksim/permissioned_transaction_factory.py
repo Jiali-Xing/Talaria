@@ -23,9 +23,9 @@ class TransactionFactory:
     def broadcast(self, json_file_name, interval, nodes_list):
         # path = Path.cwd() / 'blocksim' / 'tx_count.json'
         # path = Path.cwd() / 'DLASC' / 'simulator-master' / 'src' / 'tx_count_UTC.json'
-        path = Path.cwd() / 'DLASC' / 'simulator-master' / 'src' / json_file_name
+        path = Path.cwd() / 'supply-chain-input-data' / json_file_name
         if not path.exists():
-            raise Exception('Wrong working dir. Should be blocksim-dlasc')
+            raise Exception('Wrong working dir. Should be perm-blocksim')
         with path.open() as f:
             today = 'DAY ' + str(randint(0, 180 - 1)) + ' '
             # today = 'DAY 5 '

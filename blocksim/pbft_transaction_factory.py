@@ -22,10 +22,8 @@ class TransactionFactory:
         self._world = world
 
     def broadcast(self, json_file_name, interval, nodes_list, verbose=False):
-        # path = Path.cwd() / 'blocksim' / 'tx_count.json'
-        # path = Path.cwd() / 'DLASC' / 'simulator-master' / 'src' / 'tx_count_UTC.json'
         self.verbose = verbose
-        path = Path.cwd() / 'DLASC' / 'simulator-master' / 'src' / json_file_name
+        path = Path.cwd() / 'supply-chain-input-data' / json_file_name
         if not path.exists():
             raise Exception('Wrong working dir. Should be blocksim-dlasc')
 
@@ -53,7 +51,7 @@ class TransactionFactory:
 
         # Jiali: Here we implement the paired transaction dictionary to count international tx.
         paired = False
-        dict_path = Path.cwd() / 'DLASC' / 'simulator-master' / 'src' / 'tx_dict.json'
+        dict_path = Path.cwd() / 'supply-chain-input-data' / 'tx_dict.json'
         with dict_path.open() as df:
             paired_tx = json.load(df)
 
