@@ -44,10 +44,12 @@ This file includes distribution specifications for a variety of other delays tha
 
 ## Network
 
-
+---
+# Run the Simulation
+Here is how you can run this simulation
 ## Installation 
-
-I suggest that you use conda:
+First, clone this repo to your local directory. 
+Then, install the dependences, I suggest that you use conda:
 ```
 conda env create -f permblocksim.yml
 ```
