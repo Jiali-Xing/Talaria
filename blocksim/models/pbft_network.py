@@ -14,8 +14,7 @@ class MaliciousModel(Enum):
 
 
 class Network:
-    def __init__(self, env, name, verbose=False):
-        self.verbose = verbose
+    def __init__(self, env, name):
         self.env = env
         self.name = name
         self.blockchain = self.env.config['blockchain']

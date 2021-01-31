@@ -21,8 +21,8 @@ class TransactionFactory:
     def __init__(self, world):
         self._world = world
 
-    def broadcast(self, json_file_name, interval, nodes_list, verbose=False):
-        self.verbose = verbose
+    def broadcast(self, json_file_name, interval, nodes_list):
+        self.verbose = self._world.env.config["verbose"]
         path = Path.cwd() / 'supply-chain-input-data' / json_file_name
         if not path.exists():
             raise Exception('Wrong working dir. Should be blocksim-dlasc')

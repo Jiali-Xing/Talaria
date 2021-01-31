@@ -7,13 +7,13 @@ class Chain:
     """Defines a base chain model that needs to be extended according to blockchain protocol
     being simulated"""
 
-    def __init__(self, env, node, consensus, genesis, db, verbose=False):
-        self.verbose = verbose
+    def __init__(self, env, node, consensus, genesis, db):
         self.env = env
         self.node = node
         self.consensus = consensus
         self.db = db
         self.genesis = genesis
+        self.verbose = self.env.config["verbose"]
 
         # Set the score (AKA total difficulty in PoW)
         self.db.put(f'score:{genesis.header.hash}', "0")

@@ -46,6 +46,7 @@ class Node:
         # Set the monitor to count the forks during the simulation
         key = f'forks_{address}'
         self.env.data[key] = 0
+        self.verbose = self.env.config["verbose"]
 
     def connect(self, nodes: list):
         """Simulate an acknowledgement phase with given nodes. During simulation the nodes

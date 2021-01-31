@@ -4,8 +4,7 @@ from blocksim.utils import get_random_values, time, get_latency_delay
 
 
 class Network:
-    def __init__(self, env, name, verbose=False):
-        self.verbose = verbose
+    def __init__(self, env, name):
         self.env = env
         self.name = name
         self.blockchain = self.env.config['blockchain']
@@ -13,6 +12,7 @@ class Network:
         self._nodes = {}
         self._list_nodes = []
         self._list_probabilities = []
+        self.verbose = self.env.config["verbose"]
 
     def get_node(self, address):
         return self._nodes.get(address)
@@ -73,12 +73,12 @@ class Network:
 class Connection:
     """This class represents the propagation through a Connection."""
 
-    def __init__(self, env, origin_node, destination_node, verbose=False):
-        self.verbose = verbose
+    def __init__(self, env, origin_node, destination_node):
         self.env = env
         self.store = Store(env)
         self.origin_node = origin_node
         self.destination_node = destination_node
+        self.verbose = self.env.config["verbose"]
 
     def latency(self, envelope):
         latency_delay = get_latency_delay(
