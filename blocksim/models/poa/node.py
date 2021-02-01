@@ -1,4 +1,4 @@
-from blocksim.models.permissioned_node import Node
+from blocksim.models.permissioned_node import PermNode as Node
 from blocksim.models.permissioned_network import Network
 from blocksim.models.chain import Chain
 from blocksim.models.consensus import Consensus
@@ -16,16 +16,13 @@ class POANode(Node):
                  network: Network,
                  location: str,
                  address: str,
-                 # hashrate=0,
                  is_authority=False,
                  verbose=False):
         # Jiali: This function is borrowed from ethereum/node.py, without any change actually.
         # Create the PoA genesis block and init the chain
-        self.verbose = verbose
         genesis = Block(BlockHeader())
         consensus = Consensus(env)
         chain = Chain(env, self, consensus, genesis, BaseDB())
-        # self.hashrate = hashrate
         self.is_authority = is_authority
         super().__init__(env,
                          network,

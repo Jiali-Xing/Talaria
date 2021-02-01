@@ -3,9 +3,9 @@ import time
 from pathlib import Path
 from datetime import datetime
 
-from blocksim.models.permissioned_network import Network
-from blocksim.permissioned_node_factory import NodeFactory
-from blocksim.permissioned_transaction_factory import TransactionFactory
+from blocksim.models.poa.poa_network import PoANetwork as Network
+from blocksim.permissioned_node_factory import PermNodeFactory
+from blocksim.permissioned_transaction_factory import PermTransactionFactory
 from blocksim.world import SimulationWorld
 
 
@@ -38,7 +38,7 @@ def report_node_chain(world, nodes_list):
 
 def run_model(json_file='tx_count_10000.json'):
     now = int(time.time())  # Current time
-    duration = 3600  # seconds
+    duration = 3  # seconds
 
     world = SimulationWorld(
         duration,
@@ -72,7 +72,7 @@ def run_model(json_file='tx_count_10000.json'):
         }
     }
 
-    node_factory = NodeFactory(world, network)
+    node_factory = PermNodeFactory(world, network)
     # Create all nodes
     # Notice that the miner/non_miners this useless here, they're specified in
     # dlasc_node_factory
@@ -83,7 +83,7 @@ def run_model(json_file='tx_count_10000.json'):
     for node in nodes_list:
         node.connect(nodes_list)
 
-    transaction_factory = TransactionFactory(world)
+    transaction_factory = PermTransactionFactory(world)
     transaction_factory.broadcast(json_file, .1, nodes_list)
 
     world.start_simulation()

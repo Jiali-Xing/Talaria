@@ -106,9 +106,11 @@ class Node:
         node['knownTxs'] = known_txs
         self.active_sessions[node_address] = node
 
+
     def _read_envelope(self, envelope):
-        print(
-            f'{self.address} at {time(self.env)}: Receive a message (ID: {envelope.msg["id"]}) created at {envelope.timestamp} from {envelope.origin.address}')
+        if self.verbose:
+            print(
+                f'{self.address} at {time(self.env)}: Receive a message (ID: {envelope.msg["id"]}) created at {envelope.timestamp} from {envelope.origin.address}')
 
     def listening_node(self, connection):
         while True:

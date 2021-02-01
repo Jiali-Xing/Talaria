@@ -1,6 +1,7 @@
 {
   "blockchain": "poa",
   "locations": ["1", "2", "3", "4", "5"],
+  "verbose": true,
   "pbft": {
     "block_size_limit_mb": 1,
     "number_transactions_per_block": {

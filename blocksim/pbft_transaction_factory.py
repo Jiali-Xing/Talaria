@@ -5,12 +5,12 @@ from random import choices, randint, random
 import simpy
 import numpy as np
 from blocksim.utils import time
-
+from blocksim.permissioned_transaction_factory import PermTransactionFactory
 from blocksim.models.ethereum.transaction import Transaction as ETHTransaction
 from blocksim.models.transaction import Transaction
 
 
-class TransactionFactory:
+class PBFTTransactionFactory(PermTransactionFactory):
     """ Responsible to create batches of random transactions. Depending on the blockchain
     being simulated, transaction factory will create transactions according to the
     transaction model. Moreover, the created transactions will be broadcasted when simulation
@@ -19,7 +19,7 @@ class TransactionFactory:
     """
 
     def __init__(self, world):
-        self._world = world
+        super().__init__(world)
 
     def broadcast(self, json_file_name, interval, nodes_list):
         self.verbose = self._world.env.config["verbose"]
@@ -104,20 +104,6 @@ class TransactionFactory:
             print(f'{time(self._world.env)}, now {value} seconds have passed')
         self._world.env.data['created_transactions'] += len(tx)
         # yield self._world.env.timeout(interval)
-
-    def _generate_bitcoin_tx(self, rand_sign, i):
-        tx = Transaction('address', 'address', 140, rand_sign, 50)
-        return tx
-
-    def _generate_ethereum_tx(self, rand_sign, i):
-        gas_limit = self._world.env.config['ethereum']['tx_gas_limit']
-        tx = ETHTransaction('address', 'address',
-                            140, rand_sign, i, 2, gas_limit)
-        return tx
-
-    def _generate_poa_tx(self, rand_sign, i):
-        tx = Transaction('address', 'address', 140, rand_sign, 50)
-        return tx
 
     def _generate_pbft_tx(self, rand_sign, i):
         tx = Transaction('address', 'address', 140, rand_sign, 50)

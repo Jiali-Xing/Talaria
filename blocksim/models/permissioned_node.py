@@ -2,6 +2,7 @@ from collections import namedtuple
 from blocksim.models.permissioned_network import Connection, Network
  #Ryan: wasn't importing permissioned network before 7/5
 from blocksim.models.chain import Chain
+from blocksim.models.node import Node
 from blocksim.models.consensus import Consensus
 from blocksim.utils import get_received_delay, get_sent_delay, get_latency_delay, time
 
@@ -13,20 +14,7 @@ MAX_KNOWN_TXS = 30000
 MAX_KNOWN_BLOCKS = 1024
 
 
-class Node:
-    """This class represents the node.
-
-    Each node has their own `chain`, and when a node is initiated its started with a clean chain.
-
-    A node needs to be initiated with known nodes to run the simulation. For now there is
-    not any mechanism to discover nodes.
-
-    To properly stimulate a real world scenario, the node model needs to know the geographic
-    `location`.
-
-    In order to a node to be identified in the network simulation, is needed to have an `address`
-    """
-
+class PermNode(Node):
     def __init__(self,
                  env,
                  network: Network,
@@ -34,89 +22,26 @@ class Node:
                  address: str,
                  chain: Chain,
                  consensus: Consensus,
-                 is_authority: bool,
-                 verbose=False):
+                 is_authority: bool):
 
-        self.verbose = verbose
-        self.env = env
-        self.network = network
-        self.location = location
-        self.address = address
-        self.chain = chain
-        self.consensus = consensus
-        self.active_sessions = {}
-        self.connecting = None
+        super().__init__(env, network, location, address, chain, consensus)
+        # self.verbose = verbose
+        # self.env = env
+        # self.network = network
+        # self.location = location
+        # self.address = address
+        # self.chain = chain
+        # self.consensus = consensus
+        # self.active_sessions = {}
+        # self.connecting = None
         # Join the node to the network
-        self.network.add_node(self)
+        # self.network.add_node(self)
         # Set the monitor to count the forks during the simulation
-        key = f'forks_{address}'
-        self.env.data[key] = 0
+        # key = f'forks_{address}'
+        # self.env.data[key] = 0
         
         #Indicate whether the permissioned node is an authority or not
         self.is_authority = is_authority
-
-    def connect(self, nodes: list):
-        """Simulate an acknowledgement phase with given nodes. During simulation the nodes
-        will have an active session."""
-        for node in nodes:
-            # Ignore when a node is trying to connect to itself
-            if node.address != self.address:
-                connection = Connection(self.env, self, node)
-
-                # Set the bases to monitor the block & TX propagation
-                self.env.data['block_propagation'].update({
-                    f'{self.address}_{node.address}': {}})
-                self.env.data['tx_propagation'].update({
-                    f'{self.address}_{node.address}': {}})
-
-                self.active_sessions[node.address] = {
-                    'connection': connection,
-                    'knownTxs': {''},
-                    'knownBlocks': {''}
-                }
-                self.connecting = self.env.process(
-                    self._connecting(node, connection))
-
-    def _connecting(self, node, connection):
-        """Simulates the time needed to perform TCP handshake and acknowledgement phase.
-        During the simulation we do not need to simulate it again.
-
-        We consider that a node communicate with his peer using an open connection/channel
-        during all the simulation."""
-        origin_node = connection.origin_node
-        destination_node = connection.destination_node
-        latency = get_latency_delay(
-            self.env, origin_node.location, destination_node.location)
-        tcp_handshake_delay = 3*latency
-        yield self.env.timeout(tcp_handshake_delay)
-        self.env.process(destination_node.listening_node(connection))
-
-    def _mark_block(self, block_hash: str, node_address: str):
-        """Marks a block as known for a specific node, ensuring that it will never be
-        propagated again."""
-        node = self.active_sessions.get(node_address)
-        known_blocks = node.get('knownBlocks')
-        while len(known_blocks) >= MAX_KNOWN_BLOCKS:
-            known_blocks.pop()
-        known_blocks.add(block_hash)
-        node['knownBlocks'] = known_blocks
-        self.active_sessions[node_address] = node
-
-    def _mark_transaction(self, tx_hash: str, node_address: str):
-        """Marks a transaction as known for a specific node, ensuring that it will never be
-        propagated again."""
-        node = self.active_sessions.get(node_address)
-        known_txs = node.get('knownTxs')
-        while len(known_txs) >= MAX_KNOWN_TXS:
-            known_txs.pop()
-        known_txs.add(tx_hash)
-        node['knownTxs'] = known_txs
-        self.active_sessions[node_address] = node
-
-    def _read_envelope(self, envelope):
-        if self.verbose:
-            print(
-                f'{self.address} at {time(self.env)}: Receive a message (ID: {envelope.msg["id"]}) created at {envelope.timestamp} from {envelope.origin.address}')
 
     def listening_node(self, connection):
         while True:

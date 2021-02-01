@@ -1,6 +1,6 @@
 from collections import namedtuple  # to support envelope finality for viewchanges
-from blocksim.models.permissioned_node import Node
-from blocksim.models.pbft_network import Network, MaliciousModel
+from blocksim.models.permissioned_node import PermNode as Node
+from blocksim.models.pbft_network import PBFTNetwork as Network, MaliciousModel
 from blocksim.models.chain import Chain
 from blocksim.models.consensus import Consensus
 from blocksim.models.db import BaseDB

@@ -4,9 +4,9 @@ import time
 from pathlib import Path
 from datetime import datetime
 
-from blocksim.models.pbft_network import Network
-from blocksim.pbft_node_factory import NodeFactory
-from blocksim.pbft_transaction_factory import TransactionFactory
+from blocksim.models.pbft_network import PBFTNetwork as Network
+from blocksim.permissioned_node_factory import PermNodeFactory
+from blocksim.pbft_transaction_factory import PBFTTransactionFactory
 from blocksim.world import SimulationWorld
 
 
@@ -61,7 +61,7 @@ def run_model(json_file='tx_count_100.json', day=1):
     miners = {}
     non_miners = {}
 
-    node_factory = NodeFactory(world, network)
+    node_factory = PermNodeFactory(world, network)
     # Create all nodes
     # Notice that the miner/non_miners this useless here, they're specified in
     # dlasc_node_factory
@@ -75,7 +75,7 @@ def run_model(json_file='tx_count_100.json', day=1):
         if day > 1:
             node.restore_chains(day-1)
 
-    transaction_factory = TransactionFactory(world)
+    transaction_factory = PBFTTransactionFactory(world)
     transaction_factory.broadcast(json_file, 0.0001, nodes_list)
 
     world.start_simulation()
