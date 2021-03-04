@@ -1,4 +1,4 @@
-name: permblocksim
+name: talaria
 channels:
   - defaults
 dependencies:
