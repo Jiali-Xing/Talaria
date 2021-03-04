@@ -27,7 +27,7 @@ This function takes in a json file with the number of transactions for each node
 This file includes parameters such as the number of transactions per block, block size limit, and the max size of each block.
 
 ## latency.json
-This file includes the latency distributions from each location to each other location. There are some researches in literature which can help find these distributions for a specific use case (TODO: insert link to relevant resources/papers here)
+This file includes the latency distributions from each location to each other location. There are some researches in literature which can help find these distributions for a specific use case.
 
 ## throughput_received.json
 For each location, this file includes outgoing throughput distributions and parameters to every other location.
