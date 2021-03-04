@@ -1,8 +1,8 @@
-# PermBlockSim
+# Talaria
 
-PermBlockSim is a novel permissioned blockchain simulator based on open source blockchain simulator [BlockSim](https://github.com/carlosfaria94/blocksim). We significantly extend the capability of BlockSim, to support permissioned blockchains. To the best of our knowledge, PermBlockSim is the first blockchain simulator designed for simulating private blockchain models. 
+Talaria is a novel permissioned blockchain simulator based on open source blockchain simulator [BlockSim](https://github.com/carlosfaria94/blocksim). We significantly extend the capability of BlockSim, to support permissioned blockchains. To the best of our knowledge, Talaria is the first blockchain simulator designed for simulating private blockchain models. 
 
-Presently, a simplified version of Proof-of-Authority and the complete pBFT consensus protocols are implemented. Other permissioned protocols such as PoET can easily be included into our flexible modeling framework. Moreover, our new blockchain simulator handles  different types of faulty authorities and a variable number of transactions generated per day at every node. These features make our PermBlockSim ideal for testing and simulating protocols for a range of use cases including the challenging setting of supply chain management. We also demonstrate its application on a supply chain management example that utilizes the practical Byzantine Fault Tolerance (pBFT) protocol. 
+Presently, a simplified version of Proof-of-Authority and the complete pBFT consensus protocols are implemented. Other permissioned protocols such as PoET can easily be included into our flexible modeling framework. Moreover, our new blockchain simulator handles  different types of faulty authorities and a variable number of transactions generated per day at every node. These features make our Talaria ideal for testing and simulating protocols for a range of use cases including the challenging setting of supply chain management. We also demonstrate its application on a supply chain management example that utilizes the practical Byzantine Fault Tolerance (pBFT) protocol. 
 
 Protocols Out-of-box:
  - Simplified PoA
@@ -51,14 +51,14 @@ Here is how you can run this simulation
 First, clone this repo to your local directory. 
 Then, install the dependences, I suggest that you use conda:
 ```
-conda env create -f permblocksim.yml
+conda env create -f talaria.yml
 ```
 
 ## Running 
 ```
-cd ./perm-blocksim
+cd ./talaria
 
-conda activate permblocksim
+conda activate talaria
 export PYTHONPATH='.'
 
 python ./blocksim/pbft_main.py
