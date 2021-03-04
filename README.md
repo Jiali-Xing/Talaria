@@ -39,10 +39,13 @@ For each location, this file includes incoming throughput distributions and para
 This file includes distribution specifications for a variety of other delays that may occur. For example, the distributions for the transaction validation time, the block validation time, and the time between blocks. 
 
 ## Transaction Factory
+The current transaction factory takes in a JSON file indicating the number of transactions created by each node every day.
 
 ## Node Factory
+The node factory will populate the simulated world with new instances of some kind of node. There are currently implemented a permissioned node factory and a public node factory.
 
 ## Network
+The network is a low level class which interacts with the underlying event framework and uses the network delays config to handle processing message delivery.
 
 ---
 # Run the Simulation
