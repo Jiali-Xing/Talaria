@@ -17,7 +17,14 @@ Other features are also included for convenience:
  
 ---
 
-## Overview
+# Full Paper
+
+Please cite our paper if you use it in your research: `Talaria: A Framework for Simulation of Permissioned Blockchains for Logistics and Beyond`.
+
+The full paper is now available at [arXiv](https://arxiv.org/abs/2103.02260). 
+
+---
+# Overview
 There are several important classes that are needed by the simulator. There is needed a main file, a transaction factory, and a node factory, as well as a variety of configuration and parameter files. Each is described below in detail.
 
 ## main.py
