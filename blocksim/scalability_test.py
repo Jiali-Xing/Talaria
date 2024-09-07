@@ -17,7 +17,7 @@ def get_tx_num():
     for i in range(1, 11):
         json_file = 'tx_count_' + str(i) + '000.json'
 
-        path = Path.cwd() / 'DLASC' / 'simulator-master' / 'src' / json_file
+        path = Path.cwd() / 'supply-chain-input-data' / json_file
         if not path.exists():
             raise Exception('Wrong working dir. Should be blocksim-dlasc')
 
@@ -137,7 +137,7 @@ def plot_faulty():
 
 
 if __name__ == '__main__':
-    # x = get_tx_num()
-    # print(len(x))
-    # plot_time(x)
+    x = get_tx_num()
+    print(len(x))
+    plot_time(x)
     plot_faulty()
